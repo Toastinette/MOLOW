@@ -1102,7 +1102,7 @@ window.ML = window.ML || {};
 /* URL du proxy d'analyse photo. Vide = mode démonstration.
    La clé du modèle vit sur ce proxy, JAMAIS dans ce fichier :
    ce dépôt est public.                                        */
-ML.AI_ENDPOINT = '';
+ML.AI_ENDPOINT = 'https://molow-photo-analysis.adressedemorgan.workers.dev';
 
 ML.photo = (() => {
   let items = [], stream = null, loop = null, scanTimer = null,
@@ -1326,6 +1326,52 @@ ML.photo = (() => {
     ML.$('shotFrame').innerHTML = `<img src="${url}" alt="Repas photographié">`;
   }
 
+  /* Les photos prises par un téléphone dépassent souvent la limite du
+     proxy. Elles sont redimensionnées ici, avant tout envoi, sans modifier
+     la photo originale enregistrée sur l'appareil.                       */
+  async function prepareImage(file){
+    if (!(file instanceof File)) throw new Error('photo manquante');
+    if (!/^image\/(jpeg|png|webp)$/.test(file.type)){
+      throw new Error('format de photo incompatible');
+    }
+
+    let source, release = () => {};
+    if ('createImageBitmap' in window){
+      source = await createImageBitmap(file, {imageOrientation:'from-image'});
+      release = () => source.close();
+    } else {
+      const url = URL.createObjectURL(file);
+      source = await new Promise((resolve, reject) => {
+        const image = new Image();
+        image.onload = () => resolve(image);
+        image.onerror = () => reject(new Error('photo illisible'));
+        image.src = url;
+      });
+      release = () => URL.revokeObjectURL(url);
+    }
+
+    try {
+      const width = source.width || source.naturalWidth;
+      const height = source.height || source.naturalHeight;
+      const scale = Math.min(1, 1280 / Math.max(width, height));
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.max(1, Math.round(width * scale));
+      canvas.height = Math.max(1, Math.round(height * scale));
+      canvas.getContext('2d').drawImage(source, 0, 0, canvas.width, canvas.height);
+
+      const encode = quality => new Promise((resolve, reject) => {
+        canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error('photo illisible')),
+          'image/jpeg', quality);
+      });
+      let blob = await encode(.82);
+      if (blob.size > 2.8 * 1024 * 1024) blob = await encode(.65);
+      if (blob.size > 3 * 1024 * 1024) throw new Error('photo trop volumineuse');
+      return blob;
+    } finally {
+      release();
+    }
+  }
+
   /* --- FRONTIÈRE RÉSEAU 2 : modèle multimodal ---
      Le modèle ne renvoie jamais de calories : il nomme des aliments du
      vocabulaire local et estime des grammages. Le calcul reste ici.  */
@@ -1336,7 +1382,8 @@ ML.photo = (() => {
       return meal.map(x => ({n:x.n, g:x.g}));
     }
     const body = new FormData();
-    if (file) body.append('image', file);
+    const prepared = await prepareImage(file);
+    body.append('image', prepared, 'repas.jpg');
     body.append('hint', hint || '');
     body.append('vocabulary', JSON.stringify(ML.FOODS.map(x => x.n)));
     const r = await fetch(ML.AI_ENDPOINT, {method:'POST', body});
@@ -1347,10 +1394,16 @@ ML.photo = (() => {
 
   async function run(){
     const btn = ML.$('go');
+    if (!shot) return ML.shell.toast("Prends d'abord une photo de ton assiette");
     btn.textContent = 'Analyse…';
     let raw;
     try { raw = await analyze(shot, (ML.$('hint') || {}).value || ''); }
-    catch (e) { btn.textContent = 'Analyser'; return ML.shell.toast("Analyse indisponible"); }
+    catch (e) {
+      btn.textContent = 'Analyser';
+      const known = ['photo manquante', 'format de photo incompatible', 'photo illisible',
+        'photo trop volumineuse'];
+      return ML.shell.toast(known.includes(e.message) ? e.message : "Analyse indisponible");
+    }
 
     /* Un aliment inconnu du catalogue est écarté : le modèle ne peut
        donc introduire ni valeur ni contenu arbitraire.            */
