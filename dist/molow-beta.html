@@ -427,7 +427,7 @@ input,select{font-family:inherit}
         efface aussi : exporte de temps en temps.</p>
 
       <button class="cta ghost" style="margin-top:26px" onclick="ML.profile.reset()">Tout effacer</button>
-      <p class="note">Prototype de validation. L'analyse photo et le scan sont simulés.</p>
+      <p class="note">Prototype de validation. L'analyse photo est encore en mode démonstration.</p>
     </div>
     <nav class="nav"></nav>
   </section>
@@ -1102,7 +1102,7 @@ window.ML = window.ML || {};
 ML.AI_ENDPOINT = '';
 
 ML.photo = (() => {
-  let items = [], stream = null, loop = null, shot = null;
+  let items = [], stream = null, loop = null, scanTimer = null, shot = null;
 
   /* ---------------- caméra ---------------- */
   async function startCamera(videoEl){
@@ -1116,6 +1116,7 @@ ML.photo = (() => {
      reste allumée après la fermeture du panneau.                  */
   function stopCamera(){
     if (loop){ clearInterval(loop); loop = null; }
+    if (scanTimer){ clearTimeout(scanTimer); scanTimer = null; }
     if (stream){ stream.getTracks().forEach(t => t.stop()); stream = null; }
   }
 
@@ -1152,21 +1153,50 @@ ML.photo = (() => {
       msg("Caméra refusée. Autorise l'accès, ou saisis le numéro à la main.");
       return;
     }
-    const detector = new BarcodeDetector({formats:['ean_13','ean_8','upc_a','upc_e']});
+
+    /* Les formats disponibles dépendent du téléphone. Demander un format
+       non pris en charge peut faire échouer le détecteur après l'ouverture
+       de la caméra. On ne conserve donc que les formats annoncés par
+       l'appareil, avec un détecteur sans filtre comme solution de repli. */
+    const wanted = ['ean_13', 'ean_8', 'upc_a', 'upc_e'];
+    let detector;
+    try {
+      const supported = typeof BarcodeDetector.getSupportedFormats === 'function'
+        ? await BarcodeDetector.getSupportedFormats()
+        : [];
+      const formats = wanted.filter(f => supported.includes(f));
+      detector = formats.length ? new BarcodeDetector({formats}) : new BarcodeDetector();
+    } catch (e) {
+      try { detector = new BarcodeDetector(); }
+      catch (err) {
+        stopCamera();
+        msg("Le lecteur de ce téléphone est incompatible. Saisis le numéro à la main.");
+        return;
+      }
+    }
+
+    msg('Caméra active — centre le code-barres et rapproche doucement le téléphone.');
     let busy = false;
     loop = setInterval(async () => {
       const v = ML.$('cam');
-      if (!v || busy) return;
+      if (!v || v.readyState < 2 || busy) return;
       busy = true;
       try {
         const found = await detector.detect(v);
         if (found.length){
           stopCamera();
-          resolve(found[0].rawValue);
+          return resolve(found[0].rawValue);
         }
-      } catch (e) { /* image non exploitable sur cette frame */ }
+      } catch (e) {
+        /* Une image floue ou incomplète est normale pendant la visée.
+           Le prochain passage réessaie automatiquement. */
+      }
       busy = false;
-    }, 400);
+    }, 300);
+
+    scanTimer = setTimeout(() => {
+      msg("Toujours rien ? Éclaire le code, évite les reflets et remplis le cadre. Sinon, saisis les chiffres.");
+    }, 12000);
   }
 
   function manual(){
