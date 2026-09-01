@@ -1,0 +1,11 @@
+name = "molow-photo-analysis"
+main = "src/index.js"
+compatibility_date = "2026-09-01"
+workers_dev = true
+
+[vars]
+GEMINI_MODEL = "gemini-3.5-flash-lite"
+
+[observability.logs]
+enabled = true
+
