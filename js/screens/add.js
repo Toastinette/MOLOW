@@ -61,7 +61,9 @@ ML.add = (() => {
       .map((x, i) => ({x, i}))
       .filter(({x}) => x.n.toLowerCase().includes(q))
       .map(({x, i}) => `<button class="chip" onclick="ML.add.detail('${type}',${i})">
-        <b>${ML.h(x.n)}</b><span>${x.k} kcal / 100 ${type === 'f' ? 'g' : 'ml'}</span></button>`).join('')
+        <b>${ML.h(x.n)}</b><span>${x.estimated && x.u
+          ? `${ML.fmt(x.u * x.k / 100)} kcal / portion estimée`
+          : `${x.k} kcal / 100 ${type === 'f' ? 'g' : 'ml'}`}</span></button>`).join('')
       || `<div class="empty" style="padding:14px 0">Pas dans la base. Un scan de code-barres l'y ajoutera définitivement.</div>`;
   }
 
@@ -69,7 +71,11 @@ ML.add = (() => {
      de grammage. Le curseur reste là pour les cas hors gabarit.      */
   function presets(type, x){
     if (type === 'd') return [[x.v, '1 verre'], [x.v * 2, '2 verres'], [100, '100 ml'], [250, '250 ml'], [500, '500 ml']];
-    if (x.u) return [[x.u, '1 pièce'], [x.u * 2, '2 pièces'], [x.u * 3, '3 pièces'], [100, '100 g']];
+    if (x.u){
+      const one = x.portionLabel || '1 pièce';
+      const many = x.portionLabel ? 'portions' : 'pièces';
+      return [[x.u, one], [x.u * 2, `2 ${many}`], [x.u * 3, `3 ${many}`], [100, '100 g']];
+    }
     return [[50, '50 g'], [100, '100 g'], [150, '150 g'], [200, '200 g'], [300, '300 g']];
   }
 
@@ -77,6 +83,8 @@ ML.add = (() => {
     const x = src(type)[i];
     cur = {type, x, q: type === 'd' ? x.v : (x.u || 100)};
     ML.shell.panel(ML.shell.head(x.n) + `<div class="pbody">
+      ${x.estimated ? `<p class="sub" style="margin-bottom:12px">${ML.h(x.restaurant)} ·
+        Valeur estimée pour une portion d'environ ${x.u} g.</p>` : ''}
       <div class="qty">${presets(type, x).map(([v, l]) =>
         `<button data-q="${v}" onclick="ML.add.setQty(${v})">${l}</button>`).join('')}</div>
       <input class="slide" type="range" min="10" max="${type === 'd' ? 700 : 400}" step="5"
