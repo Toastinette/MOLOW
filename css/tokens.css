@@ -1,0 +1,81 @@
+/* Archivo, licence SIL Open Font (voir fonts/OFL.txt). Hébergée
+   localement : rendu identique hors ligne, aucune requête tierce.  */
+@font-face{
+  font-family:Archivo;
+  src:url('../fonts/archivo-var.woff2') format('woff2-variations');
+  font-weight:100 900;
+  font-stretch:62% 125%;
+  font-display:swap;
+}
+
+/* ------------------------------------------------------------------
+   tokens.css — couleurs, typographie, constantes
+   Les variables --bg / --raise / --sink / --deep / --on-* sont
+   réécrites à chaque changement de compteur par js/core/theme.js.
+   Ne pas y coder de couleur en dur ailleurs que dans ce fichier.
+------------------------------------------------------------------- */
+
+:root{
+  /* encres fixes */
+  --ink:#080B0A;
+  --paper:#F7F2E9;
+
+  /* surfaces — valeurs de départ, écrasées par theme.js */
+  --bg:hsl(168 100% 42%);
+  --raise:hsl(168 100% 51%);
+  --sink:hsl(168 96% 28%);
+  --sink2:hsl(168 88% 20%);
+  --deep:hsl(168 76% 11%);
+
+  /* encres contextuelles — recalculées par theme.js */
+  --on-bg:var(--ink);
+  --on-raise:var(--ink);
+  --on-sink:var(--paper);
+  --on-deep:var(--paper);
+
+  /* typographie */
+  --sans:Archivo,system-ui,-apple-system,sans-serif;
+  --disp-wdth:90%;
+  --disp-wght:900;
+
+  --ease:cubic-bezier(.32,.72,0,1);
+  --tr:.5s var(--ease);
+  --maxw:520px;
+}
+
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{
+  font-family:var(--sans);
+  font-size:16px;
+  background:var(--deep);
+  color:var(--on-deep);
+  overscroll-behavior:none;
+  -webkit-font-smoothing:antialiased;
+  transition:background var(--tr),color var(--tr);
+}
+button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
+input,select{font-family:inherit}
+.hide{display:none!important}
+
+/* ---- traitement typographique display ----
+   Archivo est variable : on pilote la chasse (wdth) et la graisse (wght)
+   pour approcher la grotesque ultra-grasse du mockup.            */
+.display{
+  font-family:var(--sans);
+  font-weight:var(--disp-wght);
+  font-stretch:var(--disp-wdth);
+  font-variation-settings:'wdth' 90,'wght' 900;
+  text-transform:uppercase;
+  letter-spacing:-.012em;
+  line-height:.84;
+}
+.num{
+  font-weight:900;
+  font-stretch:88%;
+  font-variation-settings:'wdth' 88,'wght' 900;
+  letter-spacing:-.02em;
+  font-variant-numeric:tabular-nums;
+}
+
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}

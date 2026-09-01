@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>MO LOW</title>
+<meta name="description" content="Suivi calorique personnel, simple et rapide.">
+<meta name="theme-color" content="#00D6AE">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/favicon.png" sizes="any">
+<link rel="preload" href="fonts/archivo-var.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="css/tokens.css">
+<link rel="stylesheet" href="css/layout.css">
+<link rel="stylesheet" href="css/components.css">
+</head>
+<body>
+
+<div id="app">
+
+  <!-- ============ première ouverture ============ -->
+  <section id="onboarding" class="hide" style="padding:24px 20px 40px">
+    <div class="display logo" style="margin-bottom:24px">MO<br>LOW</div>
+    <h1 class="display" style="font-size:40px;margin-bottom:10px">On se cale ?</h1>
+    <p style="font-size:14.5px;opacity:.75;line-height:1.6;margin-bottom:22px">
+      Quelques infos pour estimer ta dépense quotidienne. L'objectif reste modifiable ensuite.</p>
+
+    <div class="field"><label>Sexe</label>
+      <div class="seg" id="o-sex"><button data-v="h" class="on">Homme</button><button data-v="f">Femme</button></div></div>
+    <div class="field"><label>Âge</label><input id="o-age" type="number" inputmode="numeric" value="35"></div>
+    <div class="field"><label>Taille (cm)</label><input id="o-h" type="number" inputmode="numeric" value="178"></div>
+    <div class="field"><label>Poids (kg)</label><input id="o-w" type="number" inputmode="decimal" value="88"></div>
+    <div class="field"><label>Activité</label>
+      <select id="o-act">
+        <option value="1.2">Sédentaire — bureau, peu de marche</option>
+        <option value="1.375" selected>Légère — un peu de marche, golf occasionnel</option>
+        <option value="1.55">Modérée — sport 3 à 5 fois par semaine</option>
+        <option value="1.725">Soutenue — sport quasi quotidien</option>
+      </select></div>
+    <div class="field"><label>Déficit visé (kcal par jour)</label>
+      <input id="o-def" type="number" inputmode="numeric" value="450"></div>
+    <div class="recap" id="o-recap"></div>
+    <button class="cta" onclick="ML.profile.finish()">C'est parti</button>
+  </section>
+
+  <!-- ============ accueil ============ -->
+  <section id="home" class="hide">
+    <div class="top">
+      <div class="logo display">MO<br>LOW</div>
+      <button class="iconbtn" onclick="ML.go('profile')" aria-label="Profil">···</button>
+    </div>
+    <div class="hero" id="hero"></div>
+    <div id="prog"></div>
+    <div class="stats">
+      <div><div class="snum num" id="hcons">0</div><div class="slab">consommées</div></div>
+      <div><div class="slab pre">Objectif</div><div class="snum num" id="hgoal">0</div></div>
+    </div>
+    <div class="acts">
+      <button class="act eat" onclick="ML.add.open('f')"><span class="display">Manger</span><i>→</i></button>
+      <button class="act drink" onclick="ML.add.open('d')"><span class="display">Boire</span><i>→</i></button>
+    </div>
+    <button class="wide" onclick="ML.add.hungry()"><span class="display">J'ai faim</span><i>→</i></button>
+    <div class="jhead"><span>Aujourd'hui</span><span class="aside" id="hdrink"></span></div>
+    <div id="hlist"></div>
+    <nav class="nav"></nav>
+  </section>
+
+  <!-- ============ journal ============ -->
+  <section id="journal" class="hide">
+    <div class="top"><div class="logo display">Journal</div></div>
+    <div style="padding:16px 20px 0">
+      <div class="mrow">
+        <button onclick="ML.journal.shift(-1)" style="font-size:24px;opacity:.6" aria-label="Mois précédent">‹</button>
+        <b id="mlabel"></b>
+        <button onclick="ML.journal.shift(1)" style="font-size:24px;opacity:.6" aria-label="Mois suivant">›</button>
+      </div>
+      <div class="cal" id="cal"></div>
+      <div class="legend">
+        <span><i style="background:#00C46A"></i>Objectif tenu</span>
+        <span><i style="background:#FFB300"></i>Léger dépassement</span>
+        <span><i style="background:#FF2D46"></i>Dépassement</span>
+        <span><i style="background:rgba(247,242,233,.2)"></i>Rien noté</span>
+      </div>
+      <div class="wk" id="wk"></div>
+      <div id="daydet"></div>
+    </div>
+    <nav class="nav"></nav>
+  </section>
+
+  <!-- ============ profil ============ -->
+  <section id="profile" class="hide">
+    <div class="top"><div class="logo display">Profil</div></div>
+    <div style="padding:16px 20px 30px">
+      <div class="field"><label>Objectif quotidien (kcal)</label>
+        <input id="p-goal" type="number" inputmode="numeric"></div>
+      <p class="note" id="p-recap" style="margin-top:-6px"></p>
+
+      <div class="sec" style="margin-top:26px">Poids</div>
+      <div style="display:flex;gap:6px;align-items:stretch">
+        <input id="p-w" class="search" style="margin:0" type="number" inputmode="decimal"
+               placeholder="Poids du jour (kg)">
+        <button class="cta" style="width:auto;margin:0;padding:0 22px;font-size:18px"
+                onclick="ML.profile.saveWeight()">OK</button>
+      </div>
+      <div class="wlist" id="wlist"></div>
+
+      <div class="sec" style="margin-top:30px">Sauvegarde</div>
+      <button class="cta ghost" style="margin-top:0" onclick="ML.profile.exportFile()">Exporter mes données</button>
+      <button class="cta ghost" onclick="document.getElementById('p-import').click()">Restaurer une sauvegarde</button>
+      <input type="file" id="p-import" accept="application/json,.json" class="hide"
+             onchange="ML.profile.importFile(this)">
+      <p class="note">Les données restent sur ce téléphone. Vider les données du navigateur les
+        efface aussi : exporte de temps en temps.</p>
+
+      <button class="cta ghost" style="margin-top:26px" onclick="ML.profile.reset()">Tout effacer</button>
+      <p class="note">Prototype de validation. L'analyse photo et le scan sont simulés.</p>
+    </div>
+    <nav class="nav"></nav>
+  </section>
+
+</div>
+
+<div id="panel"></div>
+<div id="toast"></div>
+
+<script src="js/data/catalog.js"></script>
+<script src="js/core/utils.js"></script>
+<script src="js/core/store.js"></script>
+<script src="js/core/theme.js"></script>
+<script src="js/ui/shell.js"></script>
+<script src="js/screens/home.js"></script>
+<script src="js/screens/add.js"></script>
+<script src="js/screens/photo.js"></script>
+<script src="js/screens/macros.js"></script>
+<script src="js/screens/journal.js"></script>
+<script src="js/screens/profile.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

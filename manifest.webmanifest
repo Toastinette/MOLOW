@@ -1,0 +1,22 @@
+{
+  "name": "MO LOW",
+  "short_name": "MO LOW",
+  "description": "Suivi calorique personnel, simple et rapide.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#00D6AE",
+  "theme_color": "#00D6AE",
+  "lang": "fr",
+  "categories": ["health", "lifestyle"],
+  "icons": [
+    {"src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+    {"src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"},
+    {"src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+  ],
+  "shortcuts": [
+    {"name": "Manger", "url": "./index.html?a=eat", "icons": [{"src": "icons/icon-192.png", "sizes": "192x192"}]},
+    {"name": "Boire",  "url": "./index.html?a=drink", "icons": [{"src": "icons/icon-192.png", "sizes": "192x192"}]}
+  ]
+}
