@@ -14,7 +14,8 @@ window.ML = window.ML || {};
 ML.AI_ENDPOINT = '';
 
 ML.photo = (() => {
-  let items = [], stream = null, loop = null, scanTimer = null, shot = null;
+  let items = [], stream = null, loop = null, scanTimer = null,
+      scanControls = null, scanReader = null, shot = null;
 
   /* ---------------- caméra ---------------- */
   async function startCamera(videoEl){
@@ -27,13 +28,22 @@ ML.photo = (() => {
   /* Le flux doit être coupé explicitement, sinon la LED de la caméra
      reste allumée après la fermeture du panneau.                  */
   function stopCamera(){
+    if (scanControls){
+      try { scanControls.stop(); } catch (e) { /* déjà arrêté */ }
+      scanControls = null;
+    }
+    if (scanReader){
+      try { scanReader.reset(); } catch (e) { /* rien à libérer */ }
+      scanReader = null;
+    }
     if (loop){ clearInterval(loop); loop = null; }
     if (scanTimer){ clearTimeout(scanTimer); scanTimer = null; }
     if (stream){ stream.getTracks().forEach(t => t.stop()); stream = null; }
   }
 
   /* ---------------- code-barres ---------------- */
-  const canScan = () => 'BarcodeDetector' in window && navigator.mediaDevices;
+  const hasZXing = () => !!(window.ZXingBrowser && ZXingBrowser.BrowserMultiFormatOneDReader);
+  const canScan = () => !!(navigator.mediaDevices && (hasZXing() || 'BarcodeDetector' in window));
 
   function scan(){
     ML.shell.panel(ML.shell.head('Code-barres') + `<div class="pbody">
@@ -53,12 +63,52 @@ ML.photo = (() => {
       Open Food Facts. Un produit trouvé rejoint ta base et sera reconnu hors ligne ensuite.</p>
     </div>`);
     if (canScan()) startScan();
-    else msg("Ce navigateur ne sait pas lire les codes-barres. Saisis le numéro à la main.");
+    else msg("Ouvre l'application installée depuis GitHub Pages pour activer la caméra, ou saisis le numéro.");
   }
 
   const msg = t => { const e = ML.$('scanMsg'); if (e) e.textContent = t; };
 
   async function startScan(){
+    /* ZXing est utilisé en priorité : il fonctionne sur davantage de
+       téléphones Android que l'API BarcodeDetector expérimentale. */
+    if (hasZXing()){
+      try {
+        scanReader = new ZXingBrowser.BrowserMultiFormatOneDReader();
+        scanControls = await scanReader.decodeFromConstraints({
+          audio: false,
+          video: {
+            facingMode: {ideal: 'environment'},
+            width: {ideal: 1280},
+            height: {ideal: 720}
+          }
+        }, ML.$('cam'), result => {
+          if (!result) return;
+          const value = typeof result.getText === 'function' ? result.getText() : result.text;
+          if (!value) return;
+          stopCamera();
+          resolve(value);
+        });
+        msg('Détection automatique active — place le code-barres au centre du cadre.');
+        scanTimer = setTimeout(() => {
+          msg("Toujours rien ? Éclaire le code, évite les reflets et remplis le cadre. Sinon, saisis les chiffres.");
+        }, 12000);
+        return;
+      } catch (e) {
+        stopCamera();
+        if (e && (e.name === 'NotAllowedError' || e.name === 'SecurityError')){
+          msg("Caméra refusée. Autorise l'accès dans Chrome, puis réessaie.");
+          return;
+        }
+        /* Si ZXing ne peut pas démarrer, on tente encore le détecteur
+           natif avant de proposer la saisie manuelle. */
+      }
+    }
+
+    if (!('BarcodeDetector' in window)){
+      msg("Le lecteur automatique n'est pas disponible. Ouvre la version HTTPS installée, ou saisis le numéro.");
+      return;
+    }
+
     try {
       await startCamera(ML.$('cam'));
     } catch (e) {
@@ -87,7 +137,7 @@ ML.photo = (() => {
       }
     }
 
-    msg('Caméra active — centre le code-barres et rapproche doucement le téléphone.');
+    msg('Détection automatique active — centre le code-barres et rapproche doucement le téléphone.');
     let busy = false;
     loop = setInterval(async () => {
       const v = ML.$('cam');
