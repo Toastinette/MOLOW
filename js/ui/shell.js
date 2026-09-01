@@ -19,7 +19,12 @@ ML.shell = (() => {
   }
 
   const panel = html => ML.$('panel').innerHTML = `<div class="panel">${html}</div>`;
-  const close = () => ML.$('panel').innerHTML = '';
+  const close = () => {
+    /* Coupe le flux caméra s'il tournait : sans ça, la LED reste
+       allumée et la batterie continue de se vider.              */
+    if (window.ML && ML.photo) ML.photo.stopCamera();
+    ML.$('panel').innerHTML = '';
+  };
 
   const head = title =>
     `<div class="phead"><span class="display">${ML.h(title)}</span>

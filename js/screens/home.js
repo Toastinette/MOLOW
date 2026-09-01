@@ -14,6 +14,12 @@ ML.home = (() => {
     const pos  = ML.clamp(consumed / max * 100, 0, 100);
     const tick = 100 / OVERSHOOT;
     const over = consumed > goal;
+    /* L'étiquette suit le remplissage, mais reste dans le cadre et
+       s'efface mutuellement avec les repères fixes quand elle arrive
+       dessus : deux nombres superposés ne se lisent plus.          */
+    const labelPos = ML.clamp(pos, 9, 91);
+    const hideGoal = Math.abs(labelPos - tick) < 17;
+    const hideMax  = labelPos > 78;
     return `<div class="prog">
       <div class="track">
         <div class="fill${over ? ' over' : ''}" style="width:${pos}%"></div>
@@ -21,9 +27,9 @@ ML.home = (() => {
         <div class="head" style="left:${pos}%"></div>
       </div>
       <div class="scale">
-        <span class="l">0</span>
-        <span class="o" style="left:${tick}%"><b>${ML.fmt(goal)}</b><span>objectif</span></span>
-        <span class="r">${ML.fmt(max)}</span>
+        <span class="c" style="left:${labelPos}%"><b>${ML.fmt(consumed)}</b><span>consommées</span></span>
+        ${hideGoal ? '' : `<span class="o" style="left:${tick}%"><b>${ML.fmt(goal)}</b><span>objectif</span></span>`}
+        ${hideMax ? '' : `<span class="r">${ML.fmt(max)}</span>`}
       </div></div>`;
   }
 

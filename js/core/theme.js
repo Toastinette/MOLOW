@@ -52,12 +52,18 @@ ML.theme = (() => {
 
     /* Surfaces dérivées d'une seule teinte : un seul curseur pilote
        le fond, les deux boutons, le bandeau et le pied d'écran.      */
+    /* deep n'est plus une simple version sombre du fond : c'est un
+       gris quasi noir teinté de la couleur du moment. Les écrans de
+       lecture (journal, profil, panneaux) s'y posent, ce qui règle la
+       lisibilité sans toucher au dégradé de l'accueil.             */
+    const tint = Math.min(s * .38, 34);
     const surf = [
       ['bg',    h, s,      l],
       ['raise', h, s,      l + 9],
       ['sink',  h, s - 4,  l - 15],
-      ['sink2', h, s - 12, l - 24],
-      ['deep',  h, s - 26, l - 33]
+      ['sink2', h, s - 14, l - 26],
+      ['deep',  h, tint,   9],
+      ['deep2', h, tint,   13]
     ];
     const r = document.documentElement.style;
     surf.forEach(([name, hh, ss, ll]) => {

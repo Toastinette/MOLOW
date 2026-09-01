@@ -20,6 +20,9 @@ ML.refresh = function(){
 ML.go = function(view){
   Object.keys(ML.VIEWS).concat('onboarding').forEach(v => ML.$(v).classList.add('hide'));
   ML.$(view).classList.remove('hide');
+  /* L'accueil garde le dégradé, les autres écrans passent sur fond
+     sombre uni : c'est ce qui rend leurs champs lisibles.        */
+  ML.$('app').classList.toggle('flat', view !== 'home');
   ML.shell.nav(view);
   (ML.VIEWS[view] || (() => {}))();
   window.scrollTo(0, 0);
