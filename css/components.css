@@ -5,6 +5,55 @@
 .panel{position:fixed;inset:0;z-index:40;max-width:var(--maxw);margin:0 auto;
   background:var(--deep);color:var(--paper);display:flex;flex-direction:column;
   transition:background var(--tr)}
+
+/* ---- écrans MANGER / BOIRE ---- */
+.panel.add-panel{background:var(--deep);color:var(--on-bg);padding:0}
+.addpage{height:100%;min-height:100dvh;display:flex;flex-direction:column;overflow:hidden}
+.addscroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:18px 20px 24px;
+  background:linear-gradient(180deg,var(--bg) 0%,var(--bg) 45%,var(--sink2) 83%,var(--deep) 100%)}
+.addmast{display:flex;justify-content:space-between;align-items:flex-start}
+.addmast .logo{font-size:27px;margin-top:4px}
+.addclose{width:48px;height:48px;border:2px solid currentColor;border-radius:50%;display:grid;
+  place-items:center;font-size:37px;line-height:1;font-weight:300;color:var(--on-bg)}
+.addtitle{margin-top:22px;text-transform:uppercase}
+.addtitle h1{font-size:clamp(62px,18vw,94px);line-height:.82;letter-spacing:-.035em}
+.addtitle p{font-size:14px;font-weight:900;letter-spacing:.045em;margin-top:7px}
+.addbudget .budget{padding:12px 0 0;color:var(--on-bg)}
+.addsearch{height:54px;margin-top:17px;border-radius:28px;background:var(--paper);display:flex;
+  align-items:center;gap:12px;padding:0 18px;color:var(--ink)}
+.addsearch svg{width:28px;height:28px;fill:none;stroke:currentColor;stroke-width:2.5;flex:none}
+.addsearch input{min-width:0;flex:1;border:0;outline:0;background:transparent;color:var(--ink);font-size:16px}
+.addsearch input::placeholder{color:rgba(8,11,10,.43)}
+.addtools{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px auto 0;width:92%}
+.addtools.single{grid-template-columns:1fr;max-width:330px}
+.addtool{min-height:136px;border-radius:24px;background:var(--raise);padding:18px 10px 15px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--on-raise)}
+.addtool svg{width:66px;height:66px;fill:none;stroke:currentColor;stroke-width:4;
+  stroke-linecap:round;stroke-linejoin:round}
+.addtool b{text-transform:uppercase;font-size:13px;line-height:1.05;font-weight:900;text-align:center}
+.addsection{display:flex;align-items:center;justify-content:space-between;margin:20px 0 8px;color:var(--on-bg)}
+.addsection h2{text-transform:uppercase;font-size:15px;letter-spacing:-.01em;font-weight:900}
+.addrecent{display:grid;grid-auto-flow:column;grid-auto-columns:132px;gap:7px;overflow-x:auto;
+  margin:0 -20px;padding:0 20px 5px;scrollbar-width:none;overscroll-behavior-x:contain}
+.addrecent::-webkit-scrollbar{display:none}
+.addrecent-card{height:92px;border-radius:8px;background:var(--raise);padding:12px 10px;
+  color:var(--on-raise);display:flex;flex-direction:column;justify-content:space-between;text-align:left}
+.addrecent-card b{font-size:14px;line-height:1.05;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.addrecent-card span{display:flex;align-items:baseline;gap:4px;font-size:11px;white-space:nowrap}
+.addrecent-card small{flex:1;font-size:10px;overflow:hidden;text-overflow:ellipsis}
+.addrecent-card strong{font-size:17px;font-weight:900}
+.addlist{display:flex;flex-direction:column;gap:4px}
+.addrow{min-height:57px;border-radius:8px;background:var(--raise);color:var(--on-raise);padding:8px 13px;
+  display:flex;align-items:center;gap:12px;text-align:left}
+.addrow>b{flex:1;min-width:0;font-size:17px;line-height:1.08}
+.addrow>span{min-width:98px;text-align:right;font-size:17px;line-height:.9;white-space:nowrap}
+.addrow strong{font-size:28px;font-weight:900;font-variant-numeric:tabular-nums}
+.addrow small{display:block;font-size:9px;font-weight:700;margin-top:4px}
+.add-panel .addnav{flex:none;margin-top:0;position:relative;bottom:auto}
+@media (max-width:360px){
+  .addscroll{padding-left:15px;padding-right:15px}
+  .addtools{width:100%;gap:8px}.addtool{min-height:126px}.addrow strong{font-size:24px}
+}
 .phead{display:flex;align-items:center;gap:14px;padding:20px 20px 12px;flex:none}
 .phead .display{font-size:33px;flex:1}
 .phead .x{font-size:27px;opacity:.6;line-height:1}

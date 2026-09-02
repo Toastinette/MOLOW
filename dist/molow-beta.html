@@ -217,6 +217,55 @@ input,select{font-family:inherit}
 .panel{position:fixed;inset:0;z-index:40;max-width:var(--maxw);margin:0 auto;
   background:var(--deep);color:var(--paper);display:flex;flex-direction:column;
   transition:background var(--tr)}
+
+/* ---- écrans MANGER / BOIRE ---- */
+.panel.add-panel{background:var(--deep);color:var(--on-bg);padding:0}
+.addpage{height:100%;min-height:100dvh;display:flex;flex-direction:column;overflow:hidden}
+.addscroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:18px 20px 24px;
+  background:linear-gradient(180deg,var(--bg) 0%,var(--bg) 45%,var(--sink2) 83%,var(--deep) 100%)}
+.addmast{display:flex;justify-content:space-between;align-items:flex-start}
+.addmast .logo{font-size:27px;margin-top:4px}
+.addclose{width:48px;height:48px;border:2px solid currentColor;border-radius:50%;display:grid;
+  place-items:center;font-size:37px;line-height:1;font-weight:300;color:var(--on-bg)}
+.addtitle{margin-top:22px;text-transform:uppercase}
+.addtitle h1{font-size:clamp(62px,18vw,94px);line-height:.82;letter-spacing:-.035em}
+.addtitle p{font-size:14px;font-weight:900;letter-spacing:.045em;margin-top:7px}
+.addbudget .budget{padding:12px 0 0;color:var(--on-bg)}
+.addsearch{height:54px;margin-top:17px;border-radius:28px;background:var(--paper);display:flex;
+  align-items:center;gap:12px;padding:0 18px;color:var(--ink)}
+.addsearch svg{width:28px;height:28px;fill:none;stroke:currentColor;stroke-width:2.5;flex:none}
+.addsearch input{min-width:0;flex:1;border:0;outline:0;background:transparent;color:var(--ink);font-size:16px}
+.addsearch input::placeholder{color:rgba(8,11,10,.43)}
+.addtools{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px auto 0;width:92%}
+.addtools.single{grid-template-columns:1fr;max-width:330px}
+.addtool{min-height:136px;border-radius:24px;background:var(--raise);padding:18px 10px 15px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--on-raise)}
+.addtool svg{width:66px;height:66px;fill:none;stroke:currentColor;stroke-width:4;
+  stroke-linecap:round;stroke-linejoin:round}
+.addtool b{text-transform:uppercase;font-size:13px;line-height:1.05;font-weight:900;text-align:center}
+.addsection{display:flex;align-items:center;justify-content:space-between;margin:20px 0 8px;color:var(--on-bg)}
+.addsection h2{text-transform:uppercase;font-size:15px;letter-spacing:-.01em;font-weight:900}
+.addrecent{display:grid;grid-auto-flow:column;grid-auto-columns:132px;gap:7px;overflow-x:auto;
+  margin:0 -20px;padding:0 20px 5px;scrollbar-width:none;overscroll-behavior-x:contain}
+.addrecent::-webkit-scrollbar{display:none}
+.addrecent-card{height:92px;border-radius:8px;background:var(--raise);padding:12px 10px;
+  color:var(--on-raise);display:flex;flex-direction:column;justify-content:space-between;text-align:left}
+.addrecent-card b{font-size:14px;line-height:1.05;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.addrecent-card span{display:flex;align-items:baseline;gap:4px;font-size:11px;white-space:nowrap}
+.addrecent-card small{flex:1;font-size:10px;overflow:hidden;text-overflow:ellipsis}
+.addrecent-card strong{font-size:17px;font-weight:900}
+.addlist{display:flex;flex-direction:column;gap:4px}
+.addrow{min-height:57px;border-radius:8px;background:var(--raise);color:var(--on-raise);padding:8px 13px;
+  display:flex;align-items:center;gap:12px;text-align:left}
+.addrow>b{flex:1;min-width:0;font-size:17px;line-height:1.08}
+.addrow>span{min-width:98px;text-align:right;font-size:17px;line-height:.9;white-space:nowrap}
+.addrow strong{font-size:28px;font-weight:900;font-variant-numeric:tabular-nums}
+.addrow small{display:block;font-size:9px;font-weight:700;margin-top:4px}
+.add-panel .addnav{flex:none;margin-top:0;position:relative;bottom:auto}
+@media (max-width:360px){
+  .addscroll{padding-left:15px;padding-right:15px}
+  .addtools{width:100%;gap:8px}.addtool{min-height:126px}.addrow strong{font-size:24px}
+}
 .phead{display:flex;align-items:center;gap:14px;padding:20px 20px 12px;flex:none}
 .phead .display{font-size:33px;flex:1}
 .phead .x{font-size:27px;opacity:.6;line-height:1}
@@ -434,7 +483,7 @@ input,select{font-family:inherit}
         efface aussi : exporte de temps en temps.</p>
 
       <button class="cta ghost" style="margin-top:26px" onclick="ML.profile.reset()">Tout effacer</button>
-      <p class="note">Prototype de validation. L'analyse photo est encore en mode démonstration.</p>
+      <p class="note">L'analyse photo utilise Gemini via le proxy sécurisé MO LOW. Vérifie toujours les quantités proposées.</p>
     </div>
     <nav class="nav"></nav>
   </section>
@@ -486,14 +535,14 @@ ML.FOODS = [
    L'alcool pèse 7 kcal/g : sans cette colonne, les calories d'un rhum
    n'auraient aucun macronutriment pour les porter.                    */
 ML.DRINKS = [
-  {n:"Café noir",k:2,p:.2,c:0,f:0,a:0,v:100},      {n:"Café latte",k:48,p:2.5,c:4,f:2.4,a:0,v:250},
-  {n:"Thé",k:1,p:0,c:.2,f:0,a:0,v:250},            {n:"Eau",k:0,p:0,c:0,f:0,a:0,v:500},
+  {n:"Café noir",k:2,p:.2,c:0,f:0,a:0,v:100},      {n:"Eau",k:0,p:0,c:0,f:0,a:0,v:500},
   {n:"Bière (demi)",k:43,p:.5,c:3.6,f:0,a:3.9,v:250},
   {n:"Bière (pinte)",k:43,p:.5,c:3.6,f:0,a:3.9,v:500},
   {n:"Dodo (33 cl)",k:43,p:.5,c:3.6,f:0,a:3.9,v:330},
   {n:"Vin rouge",k:85,p:.1,c:2.6,f:0,a:9.9,v:125}, {n:"Vin blanc",k:82,p:.1,c:2.6,f:0,a:9.6,v:125},
-  {n:"Rhum",k:231,p:0,c:0,f:0,a:31.6,v:40},        {n:"Whisky",k:250,p:0,c:.1,f:0,a:34,v:40},
-  {n:"Punch créole",k:180,p:0,c:18,f:0,a:16,v:80}, {n:"Mojito",k:120,p:0,c:12,f:0,a:8,v:200},
+  {n:"Rhum",k:231,p:0,c:0,f:0,a:31.6,v:40},
+  {n:"Ricard maison",k:38,p:0,c:0,f:0,a:5.3,v:200,portionLabel:"3 cl + eau"},
+  {n:"Gin tonic maison",k:83,p:0,c:6.4,f:0,a:7.9,v:200,portionLabel:"5 cl + tonic"},
   {n:"Coca",k:42,p:0,c:10.6,f:0,a:0,v:330},        {n:"Coca zéro",k:.3,p:0,c:0,f:0,a:0,v:330},
   {n:"Soda",k:40,p:0,c:10,f:0,a:0,v:330},          {n:"Jus d'orange",k:45,p:.7,c:10,f:.1,a:0,v:200},
   {n:"Sirop",k:60,p:0,c:15,f:0,a:0,v:250},         {n:"Lait",k:46,p:3.3,c:4.8,f:1.6,a:0,v:200}
@@ -539,7 +588,7 @@ ML.MOCK_PRODUCT = {n:"Biscuits sablés",k:495,p:6,c:64,f:23,portion:33};
 window.ML = window.ML || {};
 
 ML.RESTAURANT_PORTIONS = [
-  /* Les Boucaniers — Américains */
+  /* Bololos — Américains */
   {name:"Américain Épaule",category:"Américains",grams:350,kcal:700,protein:28,carbs:85,fat:27},
   {name:"Américain Hot-Dog",category:"Américains",grams:350,kcal:720,protein:25,carbs:88,fat:30},
   {name:"Américain Bouchons porc",category:"Américains",grams:350,kcal:760,protein:30,carbs:90,fat:31},
@@ -548,7 +597,7 @@ ML.RESTAURANT_PORTIONS = [
   {name:"Américain Saucisses chipolata",category:"Américains",grams:350,kcal:820,protein:30,carbs:85,fat:39},
   {name:"Américain Sarcives",category:"Américains",grams:350,kcal:760,protein:31,carbs:91,fat:30},
 
-  /* Les Boucaniers — Gratinés */
+  /* Bololos — Gratinés */
   {name:"Gratiné Hot-Dog",category:"Gratinés",grams:330,kcal:760,protein:29,carbs:72,fat:38},
   {name:"Gratiné Bouchons porc",category:"Gratinés",grams:330,kcal:800,protein:34,carbs:74,fat:39},
   {name:"Gratiné Poulet",category:"Gratinés",grams:330,kcal:700,protein:42,carbs:70,fat:27},
@@ -556,7 +605,7 @@ ML.RESTAURANT_PORTIONS = [
   {name:"Gratiné Saucisse chipolata",category:"Gratinés",grams:330,kcal:850,protein:34,carbs:70,fat:47},
   {name:"Gratiné Sarcives",category:"Gratinés",grams:330,kcal:800,protein:35,carbs:77,fat:38},
 
-  /* Les Boucaniers — Sandwichs crudités */
+  /* Bololos — Sandwichs crudités */
   {name:"Épaule – sandwich crudités",category:"Sandwichs crudités",grams:300,kcal:520,protein:27,carbs:60,fat:18},
   {name:"Steak – sandwich crudités",category:"Sandwichs crudités",grams:300,kcal:590,protein:36,carbs:59,fat:23},
   {name:"Poulet – sandwich crudités",category:"Sandwichs crudités",grams:300,kcal:500,protein:41,carbs:59,fat:11},
@@ -566,13 +615,13 @@ ML.RESTAURANT_PORTIONS = [
   {name:"Sarcives – sandwich crudités",category:"Sandwichs crudités",grams:300,kcal:590,protein:31,carbs:66,fat:22},
   {name:"Thon frais à la plancha – sandwich crudités",category:"Sandwichs crudités",grams:300,kcal:480,protein:43,carbs:59,fat:9},
 
-  /* Les Boucaniers — Burgers */
+  /* Bololos — Burgers */
   {name:"Classic Burger",category:"Burgers",grams:240,kcal:600,protein:34,carbs:47,fat:30},
   {name:"Chicken Burger",category:"Burgers",grams:240,kcal:570,protein:38,carbs:48,fat:25},
   {name:"Bacon Burger",category:"Burgers",grams:240,kcal:680,protein:39,carbs:47,fat:37},
   {name:"Fish Burger",category:"Burgers",grams:240,kcal:590,protein:30,carbs:52,fat:29},
 
-  /* Les Boucaniers — Sandwichs spéciaux */
+  /* Bololos — Sandwichs spéciaux */
   {name:"Biquette jambon cru",category:"Sandwichs spéciaux",grams:300,kcal:610,protein:31,carbs:62,fat:27},
   {name:"Biquette steak",category:"Sandwichs spéciaux",grams:300,kcal:700,protein:39,carbs:62,fat:34},
   {name:"Biquette MMS",category:"Sandwichs spéciaux",grams:300,kcal:650,protein:34,carbs:62,fat:30},
@@ -580,12 +629,12 @@ ML.RESTAURANT_PORTIONS = [
   {name:"Texan",category:"Sandwichs spéciaux",grams:300,kcal:720,protein:37,carbs:70,fat:33},
   {name:"Sicilien",category:"Sandwichs spéciaux",grams:300,kcal:630,protein:31,carbs:69,fat:26},
 
-  /* Les Boucaniers — Croque-monsieur */
+  /* Bololos — Croque-monsieur */
   {name:"Croc' Tradi",category:"Croque-monsieur",grams:180,kcal:370,protein:20,carbs:35,fat:16},
   {name:"Croc' Chèvre",category:"Croque-monsieur",grams:180,kcal:420,protein:20,carbs:35,fat:21},
   {name:"Croc' Assiette + frites et salade",category:"Assiettes",grams:450,kcal:800,protein:25,carbs:90,fat:38},
 
-  /* Les Boucaniers — Paninis */
+  /* Bololos — Paninis */
   {name:"Panini Les Roches",category:"Paninis",grams:300,kcal:650,protein:33,carbs:70,fat:27},
   {name:"Panini Le Pêcheur – thon frais",category:"Paninis",grams:300,kcal:590,protein:40,carbs:68,fat:18},
   {name:"Panini Le Cot-Cot – poulet",category:"Paninis",grams:300,kcal:620,protein:42,carbs:68,fat:20},
@@ -594,14 +643,14 @@ ML.RESTAURANT_PORTIONS = [
   {name:"Panini Italien",category:"Paninis",grams:300,kcal:650,protein:30,carbs:72,fat:27},
   {name:"Panini 3 Fromages",category:"Paninis",grams:300,kcal:760,protein:35,carbs:67,fat:39},
 
-  /* Les Boucaniers — Salades */
+  /* Bololos — Salades */
   {name:"Salade La Poulet",category:"Salades",grams:350,kcal:500,protein:35,carbs:40,fat:20},
   {name:"Salade La Parisienne",category:"Salades",grams:350,kcal:520,protein:27,carbs:42,fat:25},
   {name:"Salade Thon frais à la plancha",category:"Salades",grams:350,kcal:400,protein:40,carbs:25,fat:14},
   {name:"Salade La Ritale",category:"Salades",grams:350,kcal:520,protein:23,carbs:35,fat:31},
   {name:"Salade Carpaccio",category:"Salades",grams:350,kcal:400,protein:33,carbs:25,fat:18},
 
-  /* Les Boucaniers — Assiettes et suppléments */
+  /* Bololos — Assiettes et suppléments */
   {name:"Steak haché + œuf + frites + salade",category:"Assiettes",grams:500,kcal:850,protein:40,carbs:70,fat:43},
   {name:"Saucisse chip péi + frites + salade",category:"Assiettes",grams:500,kcal:950,protein:31,carbs:70,fat:56},
   {name:"Barquette de frites",category:"Suppléments",grams:150,kcal:450,protein:6,carbs:60,fat:21},
@@ -614,14 +663,14 @@ ML.RESTAURANT_PORTIONS = [
 const restaurantPer100 = (value, grams) => Math.round(value * 1000 / grams) / 10;
 
 ML.RESTAURANT_FOODS = ML.RESTAURANT_PORTIONS.map(item => ({
-  n:`Les Boucaniers · ${item.name}`,
+  n:`Bololos · ${item.name}`,
   k:restaurantPer100(item.kcal, item.grams),
   p:restaurantPer100(item.protein, item.grams),
   c:restaurantPer100(item.carbs, item.grams),
   f:restaurantPer100(item.fat, item.grams),
   u:item.grams,
   portionLabel:'1 portion',
-  restaurant:'Les Boucaniers',
+  restaurant:'Bololos',
   category:item.category,
   estimated:true,
   confidence:'medium',
@@ -629,6 +678,89 @@ ML.RESTAURANT_FOODS = ML.RESTAURANT_PORTIONS.map(item => ({
 }));
 
 ML.FOODS.push(...ML.RESTAURANT_FOODS);
+</script>
+<script>
+/* js/data/personal-foods.js */
+/* ------------------------------------------------------------------
+   personal-foods.js — habitudes et recettes personnelles
+
+   FICHIER À COMPLÉTER : chaque ligne décrit une portion habituelle.
+   Les calories et macronutriments sont des estimations modifiables.
+   Le convertisseur crée automatiquement les valeurs par 100 g utilisées
+   par le calcul interne de MO LOW.
+------------------------------------------------------------------- */
+window.ML = window.ML || {};
+
+ML.PERSONAL_PORTIONS = [
+  {
+    name:"Poulet Press",category:"Maison",grams:180,kcal:430,
+    protein:42,carbs:0,fat:29,
+    aliases:["cuisse de poulet désossée","poulet à la poêle avec peau"],
+    visual:"Cuisse de poulet désossée cuite à la poêle, peau conservée et très peu d'huile."
+  },
+  {
+    name:"Tartare de thon rouge",category:"Maison",grams:150,kcal:240,
+    protein:36,carbs:2,fat:9,
+    aliases:["tartare de thon","thon rouge en tartare"],
+    visual:"Thon rouge cru coupé en petits dés, assaisonné avec herbes et une petite quantité de sauce."
+  },
+  {
+    name:"Thon rouge cru – sashimi",category:"Maison",grams:150,kcal:195,
+    protein:39,carbs:0,fat:2,
+    aliases:["sashimi de thon","thon cru en tranches"],
+    visual:"Tranches épaisses de thon rouge cru servies sans riz."
+  },
+  {
+    name:"Bœuf basilic, riz et œuf au plat",category:"Plats complets",grams:500,kcal:820,
+    protein:42,carbs:90,fat:31,
+    aliases:["boeuf basilic thaï","pad kra pao","bœuf basilic avec riz et œuf"],
+    visual:"Bœuf sauté au basilic de style thaïlandais, servi avec du riz blanc et un œuf au plat."
+  },
+  {
+    name:"Pâtes Lorraine",category:"Plats complets",grams:350,kcal:760,
+    protein:28,carbs:85,fat:34,
+    aliases:["pâtes carbonara française","pâtes crème lardons"],
+    visual:"Pâtes avec sauce à la crème et lardons, façon carbonara française."
+  },
+  {
+    name:"Pâtes à l'arrabbiata",category:"Plats complets",grams:350,kcal:560,
+    protein:18,carbs:92,fat:13,
+    aliases:["pâtes arrabiata","penne arrabbiata","pâtes sauce tomate pimentée"],
+    visual:"Pâtes avec sauce tomate rouge relevée au piment, sans crème."
+  },
+  {
+    name:"Sandwich jambon-beurre-fromage",category:"Golf",grams:250,kcal:610,
+    protein:29,carbs:69,fat:24,
+    aliases:["demi-baguette jambon beurre emmental","sandwich golf jambon fromage"],
+    visual:"Demi-baguette garnie de jambon, beurre et tranches d'emmental."
+  },
+  {
+    name:"Sandwich fromage-crudités",category:"Golf",grams:300,kcal:730,
+    protein:27,carbs:72,fat:37,
+    aliases:["demi-baguette emmental crudités","sandwich fromage mayonnaise œuf tomate salade"],
+    visual:"Demi-baguette avec emmental, mayonnaise, œuf dur, tomate et salade."
+  }
+];
+
+const personalPer100 = (value, grams) => Math.round(value * 1000 / grams) / 10;
+
+ML.PERSONAL_FOODS = ML.PERSONAL_PORTIONS.map(item => ({
+  n:item.name,
+  k:personalPer100(item.kcal, item.grams),
+  p:personalPer100(item.protein, item.grams),
+  c:personalPer100(item.carbs, item.grams),
+  f:personalPer100(item.fat, item.grams),
+  u:item.grams,
+  portionLabel:'1 portion',
+  category:item.category,
+  estimated:true,
+  confidence:'medium',
+  aliases:item.aliases || [],
+  visual:item.visual || '',
+  src:'Recette personnelle estimée'
+}));
+
+ML.FOODS.push(...ML.PERSONAL_FOODS);
 </script>
 <script>
 /* js/core/utils.js */
@@ -689,6 +821,23 @@ ML.store = (() => {
   const hasHost = () => !!(window.storage && window.storage.get && window.storage.set);
   let failed = false;
 
+  /* Migration sans changement de clé de stockage : les anciennes entrées
+     restent intactes, seul le nom du restaurant est actualisé. */
+  function migrateNames(){
+    let changed = false;
+    S.entries.forEach(entry => {
+      if (typeof entry.n === 'string' && entry.n.startsWith('Les Boucaniers · ')){
+        entry.n = entry.n.replace('Les Boucaniers · ', 'Bololos · ');
+        changed = true;
+      }
+      if (typeof entry.q === 'string'){
+        const renamed = entry.q.replaceAll('Les Boucaniers · ', 'Bololos · ');
+        if (renamed !== entry.q){ entry.q = renamed; changed = true; }
+      }
+    });
+    return changed;
+  }
+
   async function load(){
     try {
       let raw = null;
@@ -698,7 +847,10 @@ ML.store = (() => {
       } else {
         raw = localStorage.getItem(KEY);
       }
-      if (raw) S = Object.assign(blank(), JSON.parse(raw));
+      if (raw){
+        S = Object.assign(blank(), JSON.parse(raw));
+        if (migrateNames()) await save();
+      }
     } catch (e) {
       console.warn('Chargement impossible', e);
     }
@@ -733,6 +885,7 @@ ML.store = (() => {
     const d = parsed && parsed.data ? parsed.data : parsed;
     if (!d || !Array.isArray(d.entries)) throw new Error('Fichier non reconnu');
     S = Object.assign(blank(), d);
+    migrateNames();
     await save();
     return S;
   }
@@ -933,10 +1086,10 @@ window.ML = window.ML || {};
 
 ML.shell = (() => {
   const TABS = [
-    ['home',    '⌂', 'Accueil', "ML.go('home')"],
-    ['journal', '▤', 'Journal', "ML.go('journal')"],
-    ['photo',   '○', 'Photo',   'ML.photo.open()'],
-    ['profile', '◍', 'Profil',  "ML.go('profile')"]
+    ['home',    '⌂', 'Accueil', "ML.shell.jump('home')"],
+    ['journal', '▤', 'Journal', "ML.shell.jump('journal')"],
+    ['photo',   '○', 'Photo',   "ML.shell.jump('photo')"],
+    ['profile', '◍', 'Profil',  "ML.shell.jump('profile')"]
   ];
 
   function nav(active){
@@ -946,13 +1099,20 @@ ML.shell = (() => {
     document.querySelectorAll('.nav').forEach(n => n.innerHTML = html);
   }
 
-  const panel = html => ML.$('panel').innerHTML = `<div class="panel">${html}</div>`;
+  const panel = (html, extraClass = '') =>
+    ML.$('panel').innerHTML = `<div class="panel ${extraClass}">${html}</div>`;
   const close = () => {
     /* Coupe le flux caméra s'il tournait : sans ça, la LED reste
        allumée et la batterie continue de se vider.              */
     if (window.ML && ML.photo) ML.photo.stopCamera();
     ML.$('panel').innerHTML = '';
   };
+
+  function jump(view){
+    close();
+    if (view === 'photo') ML.photo.open();
+    else ML.go(view);
+  }
 
   const head = title =>
     `<div class="phead"><span class="display">${ML.h(title)}</span>
@@ -979,7 +1139,7 @@ ML.shell = (() => {
     timer = setTimeout(() => ML.$('toast').innerHTML = '', 2200);
   }
 
-  return {nav, panel, close, head, budget, toast};
+  return {nav, panel, close, jump, head, budget, toast};
 })();
 </script>
 <script>
@@ -1066,6 +1226,9 @@ window.ML = window.ML || {};
 ML.add = (() => {
   const src = t => t === 'f' ? ML.FOODS : ML.DRINKS;
   const unit = t => t === 'f' ? ' g' : ' ml';
+  const searchIcon = `<svg viewBox="0 0 48 48" aria-hidden="true"><circle cx="20" cy="20" r="13"></circle><path d="m30 30 11 11"></path></svg>`;
+  const cameraIcon = `<svg viewBox="0 0 64 64" aria-hidden="true"><path d="M19 18l5-7h16l5 7h8a5 5 0 0 1 5 5v27a5 5 0 0 1-5 5H11a5 5 0 0 1-5-5V23a5 5 0 0 1 5-5z"></path><circle cx="32" cy="35" r="13"></circle><path d="M32 26a9 9 0 0 1 9 9"></path></svg>`;
+  const barcodeIcon = `<svg viewBox="0 0 64 64" aria-hidden="true"><path d="M9 21V9h12M43 9h12v12M55 43v12H43M21 55H9V43"></path><path d="M19 20v24M25 20v24M31 20v24M38 20v24M45 20v24"></path></svg>`;
   let cur = {};
   /* Journée visée par les ajouts. null = aujourd'hui. Renseignée quand
      on rattrape une journée oubliée depuis le calendrier.            */
@@ -1084,11 +1247,11 @@ ML.add = (() => {
   /* Répétition d'une consommation déjà enregistrée : un seul geste.
      On relit l'entrée au clic plutôt que de sérialiser ses macros
      dans l'attribut onclick.                                       */
-  function quick(name, type){
+  function quick(name){
     const last = ML.store.lastOf(name);
     if (!last) return '';
-    return `<button class="chip" onclick="ML.add.repeat('${ML.esc(name)}')">
-      <b>${ML.h(name)}</b><span>${ML.h(last.q)} · ${ML.fmt(last.k)} kcal</span></button>`;
+    return `<button class="addrecent-card" onclick="ML.add.repeat('${ML.esc(name)}')">
+      <b>${ML.h(name)}</b><span><small>${ML.h(last.q)}</small><strong>${ML.fmt(last.k)}</strong> kcal</span></button>`;
   }
   function repeat(name){
     const last = ML.store.lastOf(name);
@@ -1099,18 +1262,33 @@ ML.add = (() => {
     day = forDay || null;
     const title = type === 'f' ? 'Manger' : 'Boire';
     const fav = ML.store.frequent(type), rec = ML.store.recent(type);
-    const extra = type === 'f'
-      ? `<button class="cta ghost" style="margin:0 0 6px" onclick="ML.photo.open()">Photographier l'assiette</button>
-         <button class="cta ghost" style="margin:0" onclick="ML.photo.scan()">Scanner un code-barres</button>`
-      : '';
-    ML.shell.panel(ML.shell.head(title) + ML.shell.budget(day) + `<div class="pbody">
-      <input class="search" id="q" placeholder="Chercher ${type === 'f' ? 'un aliment' : 'une boisson'}"
-             oninput="ML.add.filter('${type}')">
-      ${extra}
-      ${fav.length ? `<div class="sec">Tes habitudes</div><div class="chips">${fav.map(n => quick(n, type)).join('')}</div>` : ''}
-      ${rec.length ? `<div class="sec">Récent${type === 'd' ? 'es' : 's'}</div><div class="chips">${rec.map(n => quick(n, type)).join('')}</div>` : ''}
-      <div class="sec">${type === 'f' ? 'Tous les aliments' : 'Toutes les boissons'}</div>
-      <div class="chips list" id="list"></div></div>`);
+    const remembered = [...new Set([...rec, ...fav])].slice(0, 10);
+    const tools = type === 'f'
+      ? `<div class="addtools">
+           <button class="addtool" onclick="ML.photo.open()">${cameraIcon}<b>Photographier<br>l'assiette</b></button>
+           <button class="addtool" onclick="ML.photo.scan('f')">${barcodeIcon}<b>Scanner un<br>code-barres</b></button>
+         </div>`
+      : `<div class="addtools single">
+           <button class="addtool" onclick="ML.photo.scan('d')">${barcodeIcon}<b>Scanner une boisson</b></button>
+         </div>`;
+    ML.shell.panel(`<div class="addpage">
+      <div class="addscroll">
+        <div class="addmast"><span class="display logo">MO<br>LOW</span>
+          <button class="addclose" onclick="ML.add.cancel();ML.shell.close()" aria-label="Fermer">×</button></div>
+        <div class="addtitle"><h1 class="display">${title}</h1><p>Ajouter ${type === 'f' ? 'un aliment' : 'une boisson'}</p></div>
+        ${day ? `<div class="addbudget">${ML.shell.budget(day)}</div>` : ''}
+        <label class="addsearch">${searchIcon}<input id="q"
+          placeholder="Rechercher ${type === 'f' ? 'un aliment' : 'une boisson'}"
+          oninput="ML.add.filter('${type}')"></label>
+        ${tools}
+        ${remembered.length ? `<div class="addsection"><h2>Récents</h2></div>
+          <div class="addrecent">${remembered.map(quick).join('')}</div>` : ''}
+        <div class="addsection"><h2>${type === 'f' ? 'Tous les aliments' : 'Toutes les boissons'}</h2></div>
+        <div class="addlist" id="list"></div>
+      </div>
+      <nav class="nav addnav"></nav>
+    </div>`, 'add-panel');
+    ML.shell.nav('home');
     filter(type);
   }
 
@@ -1120,17 +1298,26 @@ ML.add = (() => {
     ML.$('list').innerHTML = list
       .map((x, i) => ({x, i}))
       .filter(({x}) => x.n.toLowerCase().includes(q))
-      .map(({x, i}) => `<button class="chip" onclick="ML.add.detail('${type}',${i})">
-        <b>${ML.h(x.n)}</b><span>${x.estimated && x.u
-          ? `${ML.fmt(x.u * x.k / 100)} kcal / portion estimée`
-          : `${x.k} kcal / 100 ${type === 'f' ? 'g' : 'ml'}`}</span></button>`).join('')
+      .map(({x, i}) => {
+        const portion = type === 'd' ? x.v : x.u;
+        const portionKcal = portion ? ML.fmt(portion * x.k / 100) : null;
+        const kcal = type === 'd' || x.estimated ? portionKcal : ML.fmt(x.k);
+        const measure = type === 'd'
+          ? (x.portionLabel || `${x.v} ml`)
+          : x.estimated ? '1 portion estimée' : '100 g';
+        return `<button class="addrow" onclick="ML.add.detail('${type}',${i})">
+          <b>${ML.h(x.n)}</b><span><strong>${kcal}</strong> kcal<small>${ML.h(measure)}</small></span></button>`;
+      }).join('')
       || `<div class="empty" style="padding:14px 0">Pas dans la base. Un scan de code-barres l'y ajoutera définitivement.</div>`;
   }
 
   /* Portions proposées : pièces si l'aliment se compte, sinon paliers
      de grammage. Le curseur reste là pour les cas hors gabarit.      */
   function presets(type, x){
-    if (type === 'd') return [[x.v, '1 verre'], [x.v * 2, '2 verres'], [100, '100 ml'], [250, '250 ml'], [500, '500 ml']];
+    if (type === 'd'){
+      const one = x.portionLabel || '1 verre';
+      return [[x.v, one], [x.v * 2, '2 verres'], [100, '100 ml'], [250, '250 ml'], [500, '500 ml']];
+    }
     if (x.u){
       const one = x.portionLabel || '1 pièce';
       const many = x.portionLabel ? 'portions' : 'pièces';
@@ -1143,7 +1330,7 @@ ML.add = (() => {
     const x = src(type)[i];
     cur = {type, x, q: type === 'd' ? x.v : (x.u || 100)};
     ML.shell.panel(ML.shell.head(x.n) + `<div class="pbody">
-      ${x.estimated ? `<p class="sub" style="margin-bottom:12px">${ML.h(x.restaurant)} ·
+      ${x.estimated ? `<p class="sub" style="margin-bottom:12px">${x.restaurant ? ML.h(x.restaurant) + ' · ' : ''}
         Valeur estimée pour une portion d'environ ${x.u} g.</p>` : ''}
       <div class="qty">${presets(type, x).map(([v, l]) =>
         `<button data-q="${v}" onclick="ML.add.setQty(${v})">${l}</button>`).join('')}</div>
@@ -1170,10 +1357,10 @@ ML.add = (() => {
   function detailCustom(item, type, presetList){
     cur = {type, x:item, q:presetList[0][0]};
     ML.shell.panel(ML.shell.head(item.n) + `<div class="pbody">
-      <p class="sub" style="margin-bottom:12px">${ML.h(item.src || '')} ${item.k} kcal / 100 g</p>
+      <p class="sub" style="margin-bottom:12px">${ML.h(item.src || '')} ${item.k} kcal / 100 ${type === 'd' ? 'ml' : 'g'}</p>
       <div class="qty">${presetList.map(([v, l]) =>
         `<button data-q="${v}" onclick="ML.add.setQty(${v})">${l}</button>`).join('')}</div>
-      <input class="slide" type="range" min="10" max="300" step="5" value="${cur.q}"
+      <input class="slide" type="range" min="10" max="${type === 'd' ? 700 : 400}" step="5" value="${cur.q}"
              oninput="ML.add.setQty(+this.value)">
       <div class="big2 num" id="dk"></div><div class="sub" id="dq"></div>
       <button class="cta" onclick="ML.add.confirm()">Ajouter</button></div>`);
@@ -1186,7 +1373,7 @@ ML.add = (() => {
     if (left <= 0){
       ML.shell.panel(ML.shell.head("J'ai faim") + `<div class="pbody">
         <p style="font-size:16px;line-height:1.6">Ton budget du jour est bouclé.
-        Un thé, un café noir ou un grand verre d'eau passent sans rien coûter.</p>
+        Un café noir ou un grand verre d'eau passent sans presque rien coûter.</p>
         <button class="cta ghost" onclick="ML.add.open('d')">Voir les boissons</button></div>`);
       return;
     }
@@ -1234,7 +1421,7 @@ ML.AI_ENDPOINT = 'https://molow-photo-analysis.adressedemorgan.workers.dev';
 
 ML.photo = (() => {
   let items = [], stream = null, loop = null, scanTimer = null,
-      scanControls = null, scanReader = null, shot = null;
+      scanControls = null, scanReader = null, shot = null, scanType = 'f';
 
   /* ---------------- caméra ---------------- */
   async function startCamera(videoEl){
@@ -1264,7 +1451,8 @@ ML.photo = (() => {
   const hasZXing = () => !!(window.ZXingBrowser && ZXingBrowser.BrowserMultiFormatOneDReader);
   const canScan = () => !!(navigator.mediaDevices && (hasZXing() || 'BarcodeDetector' in window));
 
-  function scan(){
+  function scan(type = 'f'){
+    scanType = type === 'd' ? 'd' : 'f';
     ML.shell.panel(ML.shell.head('Code-barres') + `<div class="pbody">
       <div class="frame" id="scanFrame">
         <video id="cam" playsinline muted></video>
@@ -1392,9 +1580,11 @@ ML.photo = (() => {
     let p;
     try { p = await lookup(ean); }
     catch (e) { return msg("Pas de réseau. Réessaie, ou ajoute le produit à la main."); }
-    if (!p) return msg(`Code ${ean} inconnu d'Open Food Facts. Ajoute-le à la main depuis MANGER.`);
-    ML.add.detailCustom(p, 'f',
-      [[p.portion, '1 portion'], [p.portion * 2, '2 portions'], [100, '100 g'], [p.pack, 'Le paquet']]);
+    if (!p) return msg(`Code ${ean} inconnu d'Open Food Facts. Ajoute-le à la main depuis ${scanType === 'd' ? 'BOIRE' : 'MANGER'}.`);
+    const presets = scanType === 'd'
+      ? [[p.portion, '1 portion'], [330, '33 cl'], [500, '50 cl'], [100, '100 ml']]
+      : [[p.portion, '1 portion'], [p.portion * 2, '2 portions'], [100, '100 g'], [p.pack, 'Le paquet']];
+    ML.add.detailCustom(p, scanType, presets);
   }
 
   /* --- FRONTIÈRE RÉSEAU 1 : Open Food Facts ---
@@ -1438,6 +1628,8 @@ ML.photo = (() => {
              onchange="ML.photo.preview(this)">
       <input class="search" id="hint" style="margin-top:14px"
              placeholder="Précision : « cuit à l'huile, sauce yaourt »">
+      <p class="note" style="margin-top:10px">Pour de meilleurs résultats : photographie tout le plat
+        par-dessus, avec une bonne lumière, puis précise le nom d'une recette si tu le connais.</p>
       <button class="cta" id="go" onclick="ML.photo.run()">Analyser</button>
       ${ML.AI_ENDPOINT ? '' : `<p class="note"><b>Analyse non branchée.</b> Le bouton renvoie
         une estimation de démonstration pour tester l'écran de validation. Pour une vraie
@@ -1465,9 +1657,12 @@ ML.photo = (() => {
 
     let source, release = () => {};
     if ('createImageBitmap' in window){
-      source = await createImageBitmap(file, {imageOrientation:'from-image'});
-      release = () => source.close();
-    } else {
+      try {
+        source = await createImageBitmap(file, {imageOrientation:'from-image'});
+        release = () => source.close();
+      } catch (e) { /* certains Android refusent l'option EXIF */ }
+    }
+    if (!source){
       const url = URL.createObjectURL(file);
       source = await new Promise((resolve, reject) => {
         const image = new Image();
@@ -1481,18 +1676,20 @@ ML.photo = (() => {
     try {
       const width = source.width || source.naturalWidth;
       const height = source.height || source.naturalHeight;
-      const scale = Math.min(1, 1280 / Math.max(width, height));
+      const scale = Math.min(1, 1600 / Math.max(width, height));
       const canvas = document.createElement('canvas');
       canvas.width = Math.max(1, Math.round(width * scale));
       canvas.height = Math.max(1, Math.round(height * scale));
-      canvas.getContext('2d').drawImage(source, 0, 0, canvas.width, canvas.height);
+      const context = canvas.getContext('2d');
+      if (!context) throw new Error('photo illisible');
+      context.drawImage(source, 0, 0, canvas.width, canvas.height);
 
       const encode = quality => new Promise((resolve, reject) => {
         canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error('photo illisible')),
           'image/jpeg', quality);
       });
-      let blob = await encode(.82);
-      if (blob.size > 2.8 * 1024 * 1024) blob = await encode(.65);
+      let blob = await encode(.85);
+      if (blob.size > 2.8 * 1024 * 1024) blob = await encode(.68);
       if (blob.size > 3 * 1024 * 1024) throw new Error('photo trop volumineuse');
       return blob;
     } finally {
@@ -1514,9 +1711,22 @@ ML.photo = (() => {
     body.append('image', prepared, 'repas.jpg');
     body.append('hint', hint || '');
     body.append('vocabulary', JSON.stringify(ML.FOODS.map(x => x.n)));
-    const r = await fetch(ML.AI_ENDPOINT, {method:'POST', body});
-    if (!r.ok) throw new Error('analyse indisponible');
-    const j = await r.json();
+    body.append('catalog', JSON.stringify(ML.FOODS.map(x => ({
+      n:x.n, aliases:Array.isArray(x.aliases) ? x.aliases : [], visual:x.visual || ''
+    }))));
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 45000);
+    let r;
+    try {
+      r = await fetch(ML.AI_ENDPOINT, {method:'POST', body, signal:controller.signal});
+    } catch (e) {
+      throw new Error(e && e.name === 'AbortError' ? 'analyse trop longue' : 'réseau indisponible');
+    } finally {
+      clearTimeout(timer);
+    }
+    let j = {};
+    try { j = await r.json(); } catch (e) { /* réponse non JSON */ }
+    if (!r.ok) throw new Error(j.error || 'analyse indisponible');
     return Array.isArray(j.items) ? j.items : [];
   }
 
@@ -1529,7 +1739,9 @@ ML.photo = (() => {
     catch (e) {
       btn.textContent = 'Analyser';
       const known = ['photo manquante', 'format de photo incompatible', 'photo illisible',
-        'photo trop volumineuse'];
+        'photo trop volumineuse', 'réseau indisponible', 'analyse trop longue',
+        'quota Gemini atteint', 'clé Gemini refusée', 'service Gemini temporairement indisponible',
+        'résultat Gemini invalide', 'service non configuré'];
       return ML.shell.toast(known.includes(e.message) ? e.message : "Analyse indisponible");
     }
 
@@ -1537,9 +1749,11 @@ ML.photo = (() => {
        donc introduire ni valeur ni contenu arbitraire.            */
     items = raw.map(x => ({n:ML.cleanName(x.n), g:+x.g || 0, ref:ML.byName(ML.cleanName(x.n))}))
                .filter(x => x.ref && x.g > 0);
+    if (!items.length){
+      btn.textContent = 'Analyser';
+      return ML.shell.toast('Rien reconnu — précise le plat ou reprends la photo');
+    }
     shot = null;
-
-    if (!items.length){ btn.textContent = 'Analyser'; return ML.shell.toast('Aucun aliment reconnu'); }
 
     ML.shell.panel(ML.shell.head('À valider') + `<div class="pbody">
       <p class="sub" style="line-height:1.55;margin-bottom:4px">

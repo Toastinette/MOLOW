@@ -16,6 +16,23 @@ ML.store = (() => {
   const hasHost = () => !!(window.storage && window.storage.get && window.storage.set);
   let failed = false;
 
+  /* Migration sans changement de clé de stockage : les anciennes entrées
+     restent intactes, seul le nom du restaurant est actualisé. */
+  function migrateNames(){
+    let changed = false;
+    S.entries.forEach(entry => {
+      if (typeof entry.n === 'string' && entry.n.startsWith('Les Boucaniers · ')){
+        entry.n = entry.n.replace('Les Boucaniers · ', 'Bololos · ');
+        changed = true;
+      }
+      if (typeof entry.q === 'string'){
+        const renamed = entry.q.replaceAll('Les Boucaniers · ', 'Bololos · ');
+        if (renamed !== entry.q){ entry.q = renamed; changed = true; }
+      }
+    });
+    return changed;
+  }
+
   async function load(){
     try {
       let raw = null;
@@ -25,7 +42,10 @@ ML.store = (() => {
       } else {
         raw = localStorage.getItem(KEY);
       }
-      if (raw) S = Object.assign(blank(), JSON.parse(raw));
+      if (raw){
+        S = Object.assign(blank(), JSON.parse(raw));
+        if (migrateNames()) await save();
+      }
     } catch (e) {
       console.warn('Chargement impossible', e);
     }
@@ -60,6 +80,7 @@ ML.store = (() => {
     const d = parsed && parsed.data ? parsed.data : parsed;
     if (!d || !Array.isArray(d.entries)) throw new Error('Fichier non reconnu');
     S = Object.assign(blank(), d);
+    migrateNames();
     await save();
     return S;
   }

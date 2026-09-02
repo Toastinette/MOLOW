@@ -15,7 +15,7 @@ ML.AI_ENDPOINT = 'https://molow-photo-analysis.adressedemorgan.workers.dev';
 
 ML.photo = (() => {
   let items = [], stream = null, loop = null, scanTimer = null,
-      scanControls = null, scanReader = null, shot = null;
+      scanControls = null, scanReader = null, shot = null, scanType = 'f';
 
   /* ---------------- caméra ---------------- */
   async function startCamera(videoEl){
@@ -45,7 +45,8 @@ ML.photo = (() => {
   const hasZXing = () => !!(window.ZXingBrowser && ZXingBrowser.BrowserMultiFormatOneDReader);
   const canScan = () => !!(navigator.mediaDevices && (hasZXing() || 'BarcodeDetector' in window));
 
-  function scan(){
+  function scan(type = 'f'){
+    scanType = type === 'd' ? 'd' : 'f';
     ML.shell.panel(ML.shell.head('Code-barres') + `<div class="pbody">
       <div class="frame" id="scanFrame">
         <video id="cam" playsinline muted></video>
@@ -173,9 +174,11 @@ ML.photo = (() => {
     let p;
     try { p = await lookup(ean); }
     catch (e) { return msg("Pas de réseau. Réessaie, ou ajoute le produit à la main."); }
-    if (!p) return msg(`Code ${ean} inconnu d'Open Food Facts. Ajoute-le à la main depuis MANGER.`);
-    ML.add.detailCustom(p, 'f',
-      [[p.portion, '1 portion'], [p.portion * 2, '2 portions'], [100, '100 g'], [p.pack, 'Le paquet']]);
+    if (!p) return msg(`Code ${ean} inconnu d'Open Food Facts. Ajoute-le à la main depuis ${scanType === 'd' ? 'BOIRE' : 'MANGER'}.`);
+    const presets = scanType === 'd'
+      ? [[p.portion, '1 portion'], [330, '33 cl'], [500, '50 cl'], [100, '100 ml']]
+      : [[p.portion, '1 portion'], [p.portion * 2, '2 portions'], [100, '100 g'], [p.pack, 'Le paquet']];
+    ML.add.detailCustom(p, scanType, presets);
   }
 
   /* --- FRONTIÈRE RÉSEAU 1 : Open Food Facts ---
@@ -219,6 +222,8 @@ ML.photo = (() => {
              onchange="ML.photo.preview(this)">
       <input class="search" id="hint" style="margin-top:14px"
              placeholder="Précision : « cuit à l'huile, sauce yaourt »">
+      <p class="note" style="margin-top:10px">Pour de meilleurs résultats : photographie tout le plat
+        par-dessus, avec une bonne lumière, puis précise le nom d'une recette si tu le connais.</p>
       <button class="cta" id="go" onclick="ML.photo.run()">Analyser</button>
       ${ML.AI_ENDPOINT ? '' : `<p class="note"><b>Analyse non branchée.</b> Le bouton renvoie
         une estimation de démonstration pour tester l'écran de validation. Pour une vraie
@@ -246,9 +251,12 @@ ML.photo = (() => {
 
     let source, release = () => {};
     if ('createImageBitmap' in window){
-      source = await createImageBitmap(file, {imageOrientation:'from-image'});
-      release = () => source.close();
-    } else {
+      try {
+        source = await createImageBitmap(file, {imageOrientation:'from-image'});
+        release = () => source.close();
+      } catch (e) { /* certains Android refusent l'option EXIF */ }
+    }
+    if (!source){
       const url = URL.createObjectURL(file);
       source = await new Promise((resolve, reject) => {
         const image = new Image();
@@ -262,18 +270,20 @@ ML.photo = (() => {
     try {
       const width = source.width || source.naturalWidth;
       const height = source.height || source.naturalHeight;
-      const scale = Math.min(1, 1280 / Math.max(width, height));
+      const scale = Math.min(1, 1600 / Math.max(width, height));
       const canvas = document.createElement('canvas');
       canvas.width = Math.max(1, Math.round(width * scale));
       canvas.height = Math.max(1, Math.round(height * scale));
-      canvas.getContext('2d').drawImage(source, 0, 0, canvas.width, canvas.height);
+      const context = canvas.getContext('2d');
+      if (!context) throw new Error('photo illisible');
+      context.drawImage(source, 0, 0, canvas.width, canvas.height);
 
       const encode = quality => new Promise((resolve, reject) => {
         canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error('photo illisible')),
           'image/jpeg', quality);
       });
-      let blob = await encode(.82);
-      if (blob.size > 2.8 * 1024 * 1024) blob = await encode(.65);
+      let blob = await encode(.85);
+      if (blob.size > 2.8 * 1024 * 1024) blob = await encode(.68);
       if (blob.size > 3 * 1024 * 1024) throw new Error('photo trop volumineuse');
       return blob;
     } finally {
@@ -295,9 +305,22 @@ ML.photo = (() => {
     body.append('image', prepared, 'repas.jpg');
     body.append('hint', hint || '');
     body.append('vocabulary', JSON.stringify(ML.FOODS.map(x => x.n)));
-    const r = await fetch(ML.AI_ENDPOINT, {method:'POST', body});
-    if (!r.ok) throw new Error('analyse indisponible');
-    const j = await r.json();
+    body.append('catalog', JSON.stringify(ML.FOODS.map(x => ({
+      n:x.n, aliases:Array.isArray(x.aliases) ? x.aliases : [], visual:x.visual || ''
+    }))));
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 45000);
+    let r;
+    try {
+      r = await fetch(ML.AI_ENDPOINT, {method:'POST', body, signal:controller.signal});
+    } catch (e) {
+      throw new Error(e && e.name === 'AbortError' ? 'analyse trop longue' : 'réseau indisponible');
+    } finally {
+      clearTimeout(timer);
+    }
+    let j = {};
+    try { j = await r.json(); } catch (e) { /* réponse non JSON */ }
+    if (!r.ok) throw new Error(j.error || 'analyse indisponible');
     return Array.isArray(j.items) ? j.items : [];
   }
 
@@ -310,7 +333,9 @@ ML.photo = (() => {
     catch (e) {
       btn.textContent = 'Analyser';
       const known = ['photo manquante', 'format de photo incompatible', 'photo illisible',
-        'photo trop volumineuse'];
+        'photo trop volumineuse', 'réseau indisponible', 'analyse trop longue',
+        'quota Gemini atteint', 'clé Gemini refusée', 'service Gemini temporairement indisponible',
+        'résultat Gemini invalide', 'service non configuré'];
       return ML.shell.toast(known.includes(e.message) ? e.message : "Analyse indisponible");
     }
 
@@ -318,9 +343,11 @@ ML.photo = (() => {
        donc introduire ni valeur ni contenu arbitraire.            */
     items = raw.map(x => ({n:ML.cleanName(x.n), g:+x.g || 0, ref:ML.byName(ML.cleanName(x.n))}))
                .filter(x => x.ref && x.g > 0);
+    if (!items.length){
+      btn.textContent = 'Analyser';
+      return ML.shell.toast('Rien reconnu — précise le plat ou reprends la photo');
+    }
     shot = null;
-
-    if (!items.length){ btn.textContent = 'Analyser'; return ML.shell.toast('Aucun aliment reconnu'); }
 
     ML.shell.panel(ML.shell.head('À valider') + `<div class="pbody">
       <p class="sub" style="line-height:1.55;margin-bottom:4px">

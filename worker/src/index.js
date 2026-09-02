@@ -55,6 +55,24 @@ function cleanItems(value, vocabulary){
   })).filter(item => allowed.has(item.n) && item.g >= 1 && item.g <= 2000);
 }
 
+const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
+
+async function requestGemini(url, options){
+  let lastError;
+  for (let attempt = 0; attempt < 2; attempt++){
+    try {
+      const response = await fetch(url, options);
+      if (![429, 500, 502, 503, 504].includes(response.status) || attempt === 1) return response;
+      lastError = new Error(`Gemini HTTP ${response.status}`);
+    } catch (error) {
+      lastError = error;
+      if (attempt === 1) throw error;
+    }
+    await wait(800);
+  }
+  throw lastError || new Error('Gemini indisponible');
+}
+
 export default {
   async fetch(request, env){
     const origin = request.headers.get('Origin') || '';
@@ -80,7 +98,7 @@ export default {
     const hint = String(form.get('hint') || '').trim().slice(0, 300);
     if (!(image instanceof File) || !image.size) return json({error:'photo manquante'}, 400, origin);
     if (!['image/jpeg', 'image/png', 'image/webp'].includes(image.type)){
-      return json({error:'format de photo refusé'}, 415, origin);
+      return json({error:'format de photo incompatible'}, 415, origin);
     }
     if (image.size > MAX_IMAGE_BYTES) return json({error:'photo trop volumineuse'}, 413, origin);
 
@@ -96,14 +114,38 @@ export default {
     }
     if (!vocabulary.length) return json({error:'vocabulaire vide'}, 400, origin);
 
+    /* Le catalogue enrichi est facultatif pour rester compatible avec les
+       anciennes versions de l'application. Les alias aident le modèle à
+       rattacher une recette visible au nom exact attendu par MO LOW. */
+    let catalog = [];
+    try {
+      const parsed = JSON.parse(String(form.get('catalog') || '[]'));
+      if (Array.isArray(parsed)){
+        const allowed = new Set(vocabulary);
+        catalog = parsed.filter(x => x && allowed.has(x.n)).slice(0, MAX_VOCABULARY).map(x => ({
+          n:x.n,
+          aliases:Array.isArray(x.aliases)
+            ? x.aliases.filter(a => typeof a === 'string').map(a => a.trim().slice(0, 80)).filter(Boolean).slice(0, 6)
+            : [],
+          visual:typeof x.visual === 'string' ? x.visual.trim().slice(0, 240) : ''
+        }));
+      }
+    } catch (e) { /* le vocabulaire simple reste utilisable */ }
+
+    const described = catalog.filter(x => x.aliases.length || x.visual)
+      .map(x => ({nom:x.n, alias:x.aliases, description:x.visual}));
+
     const prompt = [
       "Analyse cette photo de repas pour une application de suivi calorique.",
-      "Identifie uniquement les aliments réellement visibles.",
-      "Pour chaque aliment, choisis n EXACTEMENT dans le vocabulaire fourni, sans variante ni ajout.",
-      "Estime g, la masse visible en grammes. Ne renvoie jamais de calories.",
-      "Regroupe les éléments identiques et ne renvoie pas les ingrédients invisibles.",
-      hint ? `Précision de l'utilisateur : ${hint}` : '',
-      `Vocabulaire autorisé : ${JSON.stringify(vocabulary)}`
+      "Observe d'abord librement les éléments réellement visibles, puis rattache-les au nom autorisé le plus proche.",
+      "Pour chaque élément, choisis n EXACTEMENT dans le vocabulaire fourni, sans variante ni ajout.",
+      "Estime g, la masse totale visible en grammes. Ne renvoie jamais de calories.",
+      "Regroupe les éléments identiques et ignore les garnitures ou ingrédients qui ne sont pas visibles.",
+      "Si la précision utilisateur et la photo correspondent à un plat composé décrit dans le catalogue, renvoie ce plat une seule fois au lieu de compter séparément ses ingrédients.",
+      "Si aucun rapprochement raisonnable n'est possible, ne renvoie pas cet élément.",
+      hint ? `Précision importante de l'utilisateur : ${hint}` : '',
+      described.length ? `Recettes et synonymes connus : ${JSON.stringify(described)}` : '',
+      `Noms autorisés : ${JSON.stringify(vocabulary)}`
     ].filter(Boolean).join('\n');
 
     const body = {
@@ -124,8 +166,8 @@ export default {
               items: {
                 type: 'OBJECT',
                 properties: {
-                  n: {type:'STRING', enum:vocabulary},
-                  g: {type:'INTEGER', minimum:1, maximum:2000}
+                  n: {type:'STRING', enum:vocabulary, description:'Nom exact le plus proche dans le catalogue autorisé'},
+                  g: {type:'INTEGER', minimum:1, maximum:2000, description:'Masse totale visible estimée en grammes'}
                 },
                 required: ['n', 'g']
               }
@@ -136,10 +178,10 @@ export default {
       }
     };
 
-    const model = env.GEMINI_MODEL || 'gemini-3.5-flash-lite';
+    const model = env.GEMINI_MODEL || 'gemini-3.5-flash';
     let response;
     try {
-      response = await fetch(
+      response = await requestGemini(
         `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`,
         {
           method:'POST',
@@ -148,24 +190,29 @@ export default {
         }
       );
     } catch (e) {
-      return json({error:'modèle indisponible'}, 502, origin);
+      console.error('Gemini réseau', e && e.message ? e.message : e);
+      return json({error:'service Gemini temporairement indisponible'}, 502, origin);
     }
 
     if (!response.ok){
-      console.error('Gemini HTTP', response.status, (await response.text()).slice(0, 500));
-      return json({error:'analyse indisponible'}, 502, origin);
+      const detail = (await response.text()).slice(0, 500);
+      console.error('Gemini HTTP', response.status, detail);
+      if (response.status === 401 || response.status === 403){
+        return json({error:'clé Gemini refusée'}, 401, origin);
+      }
+      if (response.status === 429) return json({error:'quota Gemini atteint'}, 429, origin);
+      return json({error:'service Gemini temporairement indisponible'}, 502, origin);
     }
 
     let modelData;
     try { modelData = await response.json(); }
-    catch (e) { return json({error:'réponse du modèle invalide'}, 502, origin); }
+    catch (e) { return json({error:'résultat Gemini invalide'}, 502, origin); }
 
     let decoded;
-    try { decoded = JSON.parse(readModelText(modelData)); }
-    catch (e) { return json({error:'résultat non reconnu'}, 502, origin); }
+    try { decoded = JSON.parse(readModelText(modelData).replace(/^```json\s*|\s*```$/g, '')); }
+    catch (e) { return json({error:'résultat Gemini invalide'}, 502, origin); }
 
     const items = cleanItems(decoded, vocabulary);
     return json({items}, 200, origin);
   }
 };
-

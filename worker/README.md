@@ -6,7 +6,7 @@ la clé d'API dans l'application publique.
 ## Configuration
 
 - Worker : `molow-photo-analysis`
-- Modèle par défaut : `gemini-3.5-flash-lite`
+- Modèle par défaut : `gemini-3.5-flash`
 - Secret obligatoire : `GEMINI_API_KEY`
 - Origine autorisée : `https://toastinette.github.io`
 
@@ -26,4 +26,3 @@ navigateur : la réponse doit contenir `{"ok":true,"configured":true}`.
 
 La photo est transmise à Gemini pour l'analyse. Le Worker ne l'enregistre pas,
 mais l'usage du niveau gratuit Gemini reste soumis aux conditions de Google.
-

@@ -38,14 +38,14 @@ ML.FOODS = [
    L'alcool pèse 7 kcal/g : sans cette colonne, les calories d'un rhum
    n'auraient aucun macronutriment pour les porter.                    */
 ML.DRINKS = [
-  {n:"Café noir",k:2,p:.2,c:0,f:0,a:0,v:100},      {n:"Café latte",k:48,p:2.5,c:4,f:2.4,a:0,v:250},
-  {n:"Thé",k:1,p:0,c:.2,f:0,a:0,v:250},            {n:"Eau",k:0,p:0,c:0,f:0,a:0,v:500},
+  {n:"Café noir",k:2,p:.2,c:0,f:0,a:0,v:100},      {n:"Eau",k:0,p:0,c:0,f:0,a:0,v:500},
   {n:"Bière (demi)",k:43,p:.5,c:3.6,f:0,a:3.9,v:250},
   {n:"Bière (pinte)",k:43,p:.5,c:3.6,f:0,a:3.9,v:500},
   {n:"Dodo (33 cl)",k:43,p:.5,c:3.6,f:0,a:3.9,v:330},
   {n:"Vin rouge",k:85,p:.1,c:2.6,f:0,a:9.9,v:125}, {n:"Vin blanc",k:82,p:.1,c:2.6,f:0,a:9.6,v:125},
-  {n:"Rhum",k:231,p:0,c:0,f:0,a:31.6,v:40},        {n:"Whisky",k:250,p:0,c:.1,f:0,a:34,v:40},
-  {n:"Punch créole",k:180,p:0,c:18,f:0,a:16,v:80}, {n:"Mojito",k:120,p:0,c:12,f:0,a:8,v:200},
+  {n:"Rhum",k:231,p:0,c:0,f:0,a:31.6,v:40},
+  {n:"Ricard maison",k:38,p:0,c:0,f:0,a:5.3,v:200,portionLabel:"3 cl + eau"},
+  {n:"Gin tonic maison",k:83,p:0,c:6.4,f:0,a:7.9,v:200,portionLabel:"5 cl + tonic"},
   {n:"Coca",k:42,p:0,c:10.6,f:0,a:0,v:330},        {n:"Coca zéro",k:.3,p:0,c:0,f:0,a:0,v:330},
   {n:"Soda",k:40,p:0,c:10,f:0,a:0,v:330},          {n:"Jus d'orange",k:45,p:.7,c:10,f:.1,a:0,v:200},
   {n:"Sirop",k:60,p:0,c:15,f:0,a:0,v:250},         {n:"Lait",k:46,p:3.3,c:4.8,f:1.6,a:0,v:200}

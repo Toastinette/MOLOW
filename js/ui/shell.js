@@ -5,10 +5,10 @@ window.ML = window.ML || {};
 
 ML.shell = (() => {
   const TABS = [
-    ['home',    '⌂', 'Accueil', "ML.go('home')"],
-    ['journal', '▤', 'Journal', "ML.go('journal')"],
-    ['photo',   '○', 'Photo',   'ML.photo.open()'],
-    ['profile', '◍', 'Profil',  "ML.go('profile')"]
+    ['home',    '⌂', 'Accueil', "ML.shell.jump('home')"],
+    ['journal', '▤', 'Journal', "ML.shell.jump('journal')"],
+    ['photo',   '○', 'Photo',   "ML.shell.jump('photo')"],
+    ['profile', '◍', 'Profil',  "ML.shell.jump('profile')"]
   ];
 
   function nav(active){
@@ -18,13 +18,20 @@ ML.shell = (() => {
     document.querySelectorAll('.nav').forEach(n => n.innerHTML = html);
   }
 
-  const panel = html => ML.$('panel').innerHTML = `<div class="panel">${html}</div>`;
+  const panel = (html, extraClass = '') =>
+    ML.$('panel').innerHTML = `<div class="panel ${extraClass}">${html}</div>`;
   const close = () => {
     /* Coupe le flux caméra s'il tournait : sans ça, la LED reste
        allumée et la batterie continue de se vider.              */
     if (window.ML && ML.photo) ML.photo.stopCamera();
     ML.$('panel').innerHTML = '';
   };
+
+  function jump(view){
+    close();
+    if (view === 'photo') ML.photo.open();
+    else ML.go(view);
+  }
 
   const head = title =>
     `<div class="phead"><span class="display">${ML.h(title)}</span>
@@ -51,5 +58,5 @@ ML.shell = (() => {
     timer = setTimeout(() => ML.$('toast').innerHTML = '', 2200);
   }
 
-  return {nav, panel, close, head, budget, toast};
+  return {nav, panel, close, jump, head, budget, toast};
 })();
