@@ -195,6 +195,14 @@ ML.add = (() => {
   }
 
   /* ---- J'AI FAIM : collations dédiées, jamais les repas complets ---- */
+  const dailySnackScore = (name, category) => {
+    const today = new Date();
+    const key = `${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()}|${category}|${name}`;
+    let hash = 2166136261;
+    for (let i = 0; i < key.length; i++) hash = Math.imul(hash ^ key.charCodeAt(i), 16777619);
+    return (hash >>> 0) / 4294967295;
+  };
+
   function hungry(){
     day = null;
     const left = ML.store.left();
@@ -203,8 +211,12 @@ ML.add = (() => {
     const suggestions = categories.map(category => [category, ML.SNACKS
       .map((snack, index) => ({snack, index}))
       .filter(({snack}) => snack.category === category && snack.portionKcal <= left)
-      .sort((a, b) => Math.abs(a.snack.portionKcal - targets[category]) -
-                      Math.abs(b.snack.portionKcal - targets[category]))
+      .sort((a, b) => {
+        const target = Math.max(1, targets[category]);
+        const score = ({snack}) => Math.abs(snack.portionKcal - target) / target * .45 +
+          dailySnackScore(snack.n, category) * .55;
+        return score(a) - score(b);
+      })
       .slice(0, 5)]).filter(([, list]) => list.length);
     const content = left <= 0
       ? `<div class="hungry-empty"><b>Budget du jour atteint</b><p>Si c'est de la soif, commence par un grand verre d'eau. Sinon, tu peux toujours noter honnêtement une collation.</p>
@@ -222,7 +234,7 @@ ML.add = (() => {
         <button class="addclose" onclick="ML.shell.close()" aria-label="Fermer">×</button></div>
       <div class="addtitle"><h1 class="display">J'ai faim</h1><p>Une collation qui rentre dans la journée</p></div>
       <div class="hungry-budget"><span>Calories disponibles</span><b>${ML.fmt(Math.max(0,left))}</b><small>kcal</small></div>
-      <p class="hungry-intro">Des portions prêtes à manger sur le pouce. Choisis une envie, puis ajuste la quantité si nécessaire.</p>
+      <p class="hungry-intro">Des idées différentes chaque jour, adaptées à tes calories restantes. Choisis une envie, puis ajuste la quantité si nécessaire.</p>
       ${content}
     </div><nav class="nav addnav"></nav></div>`, 'add-panel');
     ML.shell.nav('home');

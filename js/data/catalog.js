@@ -15,6 +15,8 @@ ML.FOODS = [
   {n:"Steak haché 5%",k:130,p:21,c:0,f:5},     {n:"Jambon",k:110,p:18,c:1,f:3.5},
   {n:"Saumon",k:200,p:20,c:0,f:13},            {n:"Thon",k:130,p:26,c:0,f:1},
   {n:"Crevettes",k:100,p:21,c:.5,f:1},         {n:"Œuf",k:145,p:12.6,c:.7,f:10,u:55},
+  {n:"Œuf dur",k:145,p:12.6,c:.7,f:10,u:55,portionLabel:"1 œuf"},
+  {n:"Œuf dur mayonnaise",k:238.5,p:10,c:.9,f:21.7,u:65,portionLabel:"1 œuf + mayonnaise"},
   {n:"Pain",k:265,p:9,c:49,f:3.2},             {n:"Baguette",k:270,p:9,c:55,f:1.5},
   {n:"Beurre",k:750,p:.7,c:.6,f:83},           {n:"Huile d'olive",k:900,p:0,c:0,f:100},
   {n:"Fromage",k:350,p:25,c:1.3,f:28},         {n:"Yaourt nature",k:60,p:4.5,c:5,f:3},

@@ -17,7 +17,7 @@ ML.photo = (() => {
   let items = [], stream = null, loop = null, scanTimer = null,
       scanControls = null, scanReader = null, shot = null, scanType = 'f',
       menuFiles = [], menuItems = [], menuRestaurant = '', menuUrls = [];
-  const plateIcon = `<svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="23"></circle><circle cx="32" cy="32" r="13"></circle><path d="M8 12v17M13 12v17M18 12v17M13 29v23M51 12c-6 7-6 18 0 22v18"></path></svg>`;
+  const plateIcon = `<svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="15"></circle><circle cx="32" cy="32" r="7"></circle><path d="M9 22V9h13M42 9h13v13M55 42v13H42M22 55H9V42"></path></svg>`;
   const restaurantIcon = `<svg viewBox="0 0 64 64" aria-hidden="true"><path d="M9 54h46M14 54V27h36v27M10 27l5-15h34l5 15M13 27c3 5 8 5 11 0 3 5 8 5 11 0 3 5 8 5 11 0 3 5 7 5 9 0"></path><path d="M21 38h9v16M38 38h6v7h-6z"></path></svg>`;
 
   /* La navigation PHOTO devient un point d'entrée vers les deux usages
