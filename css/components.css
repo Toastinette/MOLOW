@@ -31,6 +31,17 @@
 .addtool svg{width:66px;height:66px;fill:none;stroke:currentColor;stroke-width:4;
   stroke-linecap:round;stroke-linejoin:round}
 .addtool b{text-transform:uppercase;font-size:13px;line-height:1.05;font-weight:900;text-align:center}
+.restaurant-tabs{display:flex;gap:7px;overflow-x:auto;margin:17px -20px 0;padding:0 20px 5px;
+  scrollbar-width:none;overscroll-behavior-x:contain}
+.restaurant-tabs::-webkit-scrollbar{display:none}
+.restaurant-tabs button{flex:none;border:1.5px solid currentColor;border-radius:18px;padding:8px 13px;
+  font-size:12px;font-weight:700;white-space:nowrap;color:var(--on-bg)}
+.restaurant-tabs button.on{background:var(--ink);border-color:var(--ink);color:var(--paper)}
+.restaurant-manage{margin-top:7px;padding:10px 12px;border-radius:7px;background:rgba(8,11,10,.12);
+  display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:11px}
+.restaurant-manage button{font-weight:800;text-decoration:underline;text-underline-offset:2px}
+.restaurant-manage.danger{background:var(--ink);color:var(--paper);flex-wrap:wrap}
+.restaurant-manage.danger span{width:100%}.restaurant-manage.danger button{flex:1;text-align:left}
 .addsection{display:flex;align-items:center;justify-content:space-between;margin:20px 0 8px;color:var(--on-bg)}
 .addsection h2{text-transform:uppercase;font-size:15px;letter-spacing:-.01em;font-weight:900}
 .addrecent{display:grid;grid-auto-flow:column;grid-auto-columns:132px;gap:7px;overflow-x:auto;
@@ -50,9 +61,44 @@
 .addrow strong{font-size:28px;font-weight:900;font-variant-numeric:tabular-nums}
 .addrow small{display:block;font-size:9px;font-weight:700;margin-top:4px}
 .add-panel .addnav{flex:none;margin-top:0;position:relative;bottom:auto}
+
+/* ---- accueil PHOTO et import de cartes ---- */
+.photohub .addscroll{display:flex;flex-direction:column}
+.photohub-tools{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:28px}
+.photohub-tools .addtool{min-height:190px;background:var(--raise)}
+.photohub-tools .addtool.restaurant{background:var(--sink);color:var(--on-sink)}
+.photohub-tools .addtool svg{width:78px;height:78px}
+.photohub-note{margin-top:18px;padding:14px;border-top:1.5px solid currentColor;
+  font-size:13px;line-height:1.55;font-weight:600}
+.menu-upload{min-height:190px;border:1.5px dashed rgba(247,242,233,.36);border-radius:8px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;
+  gap:8px;padding:20px;background:var(--deep2);color:var(--paper)}
+.menu-upload svg{width:70px;height:70px;fill:none;stroke:currentColor;stroke-width:3;
+  stroke-linecap:round;stroke-linejoin:round}
+.menu-upload b{text-transform:uppercase;font-size:16px}.menu-upload span{font-size:12px;opacity:.65}
+.menu-previews{display:grid;grid-template-columns:repeat(2,1fr);gap:7px;margin-top:10px}
+.menu-previews div{height:112px;border-radius:5px;overflow:hidden;position:relative;background:var(--deep2)}
+.menu-previews img{width:100%;height:100%;object-fit:cover}
+.menu-previews span{position:absolute;left:6px;bottom:6px;background:var(--ink);color:var(--paper);
+  padding:4px 7px;border-radius:3px;font-size:10px}
+.menu-warning{background:var(--bg);color:var(--on-bg);border-radius:5px;padding:13px;
+  font-size:13px;line-height:1.45;margin-bottom:12px}
+.menu-warning b{display:block;text-transform:uppercase;font-size:15px}
+.menu-review{position:relative;border-top:1px solid rgba(247,242,233,.18);padding:13px 30px 13px 0}
+.menu-review .rm{position:absolute;right:0;top:14px;font-size:22px;opacity:.55}
+.menu-name{width:100%;background:transparent;border:0;border-bottom:1px solid rgba(247,242,233,.25);
+  color:var(--paper);font-size:16px;font-weight:700;padding:0 0 6px;outline:0}
+.menu-review p{font-size:11.5px;line-height:1.4;opacity:.65;margin:7px 0}
+.menu-review>div{display:flex;align-items:baseline;gap:4px;font-size:13px}
+.menu-review>div input{width:64px;background:var(--deep2);border:1px solid rgba(247,242,233,.25);
+  color:var(--paper);padding:7px;text-align:right;font-size:18px;font-weight:900;border-radius:3px}
+.menu-review>div b{font-size:11px;text-transform:uppercase}.menu-review>div small{margin-left:auto;opacity:.55}
+.prudence{background:var(--bg);color:var(--on-bg);border-radius:4px;padding:12px;margin-bottom:12px}
+.prudence b,.prudence span{display:block}.prudence span{font-size:11px;margin-top:3px;opacity:.7}
 @media (max-width:360px){
   .addscroll{padding-left:15px;padding-right:15px}
   .addtools{width:100%;gap:8px}.addtool{min-height:126px}.addrow strong{font-size:24px}
+  .photohub-tools{grid-template-columns:1fr}.photohub-tools .addtool{min-height:145px}
 }
 .phead{display:flex;align-items:center;gap:14px;padding:20px 20px 12px;flex:none}
 .phead .display{font-size:33px;flex:1}

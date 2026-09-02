@@ -4,12 +4,12 @@
 window.ML = window.ML || {};
 
 ML.add = (() => {
-  const src = t => t === 'f' ? ML.FOODS : ML.DRINKS;
+  const src = t => t === 'f' ? [...ML.FOODS, ...ML.store.restaurantFoods] : ML.DRINKS;
   const unit = t => t === 'f' ? ' g' : ' ml';
   const searchIcon = `<svg viewBox="0 0 48 48" aria-hidden="true"><circle cx="20" cy="20" r="13"></circle><path d="m30 30 11 11"></path></svg>`;
   const cameraIcon = `<svg viewBox="0 0 64 64" aria-hidden="true"><path d="M19 18l5-7h16l5 7h8a5 5 0 0 1 5 5v27a5 5 0 0 1-5 5H11a5 5 0 0 1-5-5V23a5 5 0 0 1 5-5z"></path><circle cx="32" cy="35" r="13"></circle><path d="M32 26a9 9 0 0 1 9 9"></path></svg>`;
   const barcodeIcon = `<svg viewBox="0 0 64 64" aria-hidden="true"><path d="M9 21V9h12M43 9h12v12M55 43v12H43M21 55H9V43"></path><path d="M19 20v24M25 20v24M31 20v24M38 20v24M45 20v24"></path></svg>`;
-  let cur = {};
+  let cur = {}, restaurantFilter = '', deletePendingId = '';
   /* Journée visée par les ajouts. null = aujourd'hui. Renseignée quand
      on rattrape une journée oubliée depuis le calendrier.            */
   let day = null;
@@ -40,6 +40,8 @@ ML.add = (() => {
 
   function open(type, forDay){
     day = forDay || null;
+    restaurantFilter = '';
+    deletePendingId = '';
     const title = type === 'f' ? 'Manger' : 'Boire';
     const fav = ML.store.frequent(type), rec = ML.store.recent(type);
     const remembered = [...new Set([...rec, ...fav])].slice(0, 10);
@@ -61,23 +63,66 @@ ML.add = (() => {
           placeholder="Rechercher ${type === 'f' ? 'un aliment' : 'une boisson'}"
           oninput="ML.add.filter('${type}')"></label>
         ${tools}
+        ${type === 'f' ? `<div class="restaurant-tabs" id="restaurantTabs"></div>
+          <div id="restaurantActions"></div>` : ''}
         ${remembered.length ? `<div class="addsection"><h2>Récents</h2></div>
           <div class="addrecent">${remembered.map(quick).join('')}</div>` : ''}
-        <div class="addsection"><h2>${type === 'f' ? 'Tous les aliments' : 'Toutes les boissons'}</h2></div>
+        <div class="addsection"><h2 id="listTitle">${type === 'f' ? 'Tous les aliments' : 'Toutes les boissons'}</h2></div>
         <div class="addlist" id="list"></div>
       </div>
       <nav class="nav addnav"></nav>
     </div>`, 'add-panel');
     ML.shell.nav('home');
+    if (type === 'f') renderRestaurantTabs();
     filter(type);
   }
+
+  function restaurantGroups(){
+    return [...new Set(src('f').map(x => x.restaurant).filter(Boolean))];
+  }
+  function renderRestaurantTabs(){
+    const tabs = ML.$('restaurantTabs');
+    if (!tabs) return;
+    tabs.innerHTML = `<button class="${restaurantFilter ? '' : 'on'}" onclick="ML.add.selectRestaurant('')">Tous</button>` +
+      restaurantGroups().map(name => `<button class="${restaurantFilter === name ? 'on' : ''}"
+        onclick="ML.add.selectRestaurant('${ML.esc(name)}')">${ML.h(name)}</button>`).join('');
+    const dynamic = ML.store.restaurants.find(x => x.name === restaurantFilter);
+    const actions = ML.$('restaurantActions');
+    if (actions) actions.innerHTML = dynamic ? `<div class="restaurant-manage ${deletePendingId === dynamic.id ? 'danger' : ''}">
+      <span>${deletePendingId === dynamic.id ? 'Le journal déjà enregistré sera conservé.' : `${dynamic.foods.length} plat${dynamic.foods.length > 1 ? 's' : ''} enregistrés`}</span>
+      ${deletePendingId === dynamic.id
+        ? `<button onclick="ML.add.deleteRestaurant('${ML.esc(dynamic.id)}')">Confirmer</button>
+           <button onclick="ML.add.cancelDelete()">Annuler</button>`
+        : `<button onclick="ML.add.deleteRestaurant('${ML.esc(dynamic.id)}')">Supprimer le restaurant</button>`}</div>` : '';
+    const title = ML.$('listTitle');
+    if (title) title.textContent = restaurantFilter || 'Tous les aliments';
+  }
+  function selectRestaurant(name){
+    restaurantFilter = name || '';
+    deletePendingId = '';
+    renderRestaurantTabs();
+    filter('f');
+  }
+  function deleteRestaurant(id){
+    const restaurant = ML.store.restaurants.find(x => x.id === id);
+    if (!restaurant) return;
+    if (deletePendingId !== id){ deletePendingId = id; renderRestaurantTabs(); return; }
+    ML.store.removeRestaurant(id);
+    deletePendingId = '';
+    restaurantFilter = '';
+    renderRestaurantTabs();
+    filter('f');
+    ML.shell.toast(`${restaurant.name} supprimé du catalogue`);
+  }
+  function cancelDelete(){ deletePendingId = ''; renderRestaurantTabs(); }
 
   function filter(type){
     const q = (ML.$('q').value || '').toLowerCase().trim();
     const list = src(type);
     ML.$('list').innerHTML = list
       .map((x, i) => ({x, i}))
-      .filter(({x}) => x.n.toLowerCase().includes(q))
+      .filter(({x}) => x.n.toLowerCase().includes(q) &&
+        (type !== 'f' || !restaurantFilter || x.restaurant === restaurantFilter))
       .map(({x, i}) => {
         const portion = type === 'd' ? x.v : x.u;
         const portionKcal = portion ? ML.fmt(portion * x.k / 100) : null;
@@ -112,6 +157,8 @@ ML.add = (() => {
     ML.shell.panel(ML.shell.head(x.n) + `<div class="pbody">
       ${x.estimated ? `<p class="sub" style="margin-bottom:12px">${x.restaurant ? ML.h(x.restaurant) + ' · ' : ''}
         Valeur estimée pour une portion d'environ ${x.u} g.</p>` : ''}
+      ${x.kcalHigh ? `<div class="prudence"><b>Estimation prudente : ${ML.fmt(x.kcalHigh)} kcal retenues</b>
+        <span>Fourchette IA : ${ML.fmt(x.kcalLow)}–${ML.fmt(x.kcalHigh)} kcal</span></div>` : ''}
       <div class="qty">${presets(type, x).map(([v, l]) =>
         `<button data-q="${v}" onclick="ML.add.setQty(${v})">${l}</button>`).join('')}</div>
       <input class="slide" type="range" min="10" max="${type === 'd' ? 700 : 400}" step="5"
@@ -159,7 +206,7 @@ ML.add = (() => {
     }
     const portion = x => x.u || 100;
     const kcal = x => portion(x) * x.k / 100;
-    const fits = ML.FOODS.map((x, i) => ({x, i})).filter(({x}) => kcal(x) <= left)
+    const fits = src('f').map((x, i) => ({x, i})).filter(({x}) => kcal(x) <= left)
                    .sort((a, b) => kcal(a.x) - kcal(b.x));
     const band = (lo, hi) => fits.filter(({x}) => kcal(x) >= lo && kcal(x) <= hi).slice(0, 4);
     const tiers = [['Léger', band(0, left * .35)],
@@ -176,5 +223,6 @@ ML.add = (() => {
   }
 
   return {open, filter, detail, detailCustom, setQty, confirm, commit, repeat, hungry,
+          selectRestaurant, deleteRestaurant, cancelDelete,
           get day(){ return day; }, cancel(){ day = null; }};
 })();

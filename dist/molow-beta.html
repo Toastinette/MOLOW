@@ -243,6 +243,17 @@ input,select{font-family:inherit}
 .addtool svg{width:66px;height:66px;fill:none;stroke:currentColor;stroke-width:4;
   stroke-linecap:round;stroke-linejoin:round}
 .addtool b{text-transform:uppercase;font-size:13px;line-height:1.05;font-weight:900;text-align:center}
+.restaurant-tabs{display:flex;gap:7px;overflow-x:auto;margin:17px -20px 0;padding:0 20px 5px;
+  scrollbar-width:none;overscroll-behavior-x:contain}
+.restaurant-tabs::-webkit-scrollbar{display:none}
+.restaurant-tabs button{flex:none;border:1.5px solid currentColor;border-radius:18px;padding:8px 13px;
+  font-size:12px;font-weight:700;white-space:nowrap;color:var(--on-bg)}
+.restaurant-tabs button.on{background:var(--ink);border-color:var(--ink);color:var(--paper)}
+.restaurant-manage{margin-top:7px;padding:10px 12px;border-radius:7px;background:rgba(8,11,10,.12);
+  display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:11px}
+.restaurant-manage button{font-weight:800;text-decoration:underline;text-underline-offset:2px}
+.restaurant-manage.danger{background:var(--ink);color:var(--paper);flex-wrap:wrap}
+.restaurant-manage.danger span{width:100%}.restaurant-manage.danger button{flex:1;text-align:left}
 .addsection{display:flex;align-items:center;justify-content:space-between;margin:20px 0 8px;color:var(--on-bg)}
 .addsection h2{text-transform:uppercase;font-size:15px;letter-spacing:-.01em;font-weight:900}
 .addrecent{display:grid;grid-auto-flow:column;grid-auto-columns:132px;gap:7px;overflow-x:auto;
@@ -262,9 +273,44 @@ input,select{font-family:inherit}
 .addrow strong{font-size:28px;font-weight:900;font-variant-numeric:tabular-nums}
 .addrow small{display:block;font-size:9px;font-weight:700;margin-top:4px}
 .add-panel .addnav{flex:none;margin-top:0;position:relative;bottom:auto}
+
+/* ---- accueil PHOTO et import de cartes ---- */
+.photohub .addscroll{display:flex;flex-direction:column}
+.photohub-tools{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:28px}
+.photohub-tools .addtool{min-height:190px;background:var(--raise)}
+.photohub-tools .addtool.restaurant{background:var(--sink);color:var(--on-sink)}
+.photohub-tools .addtool svg{width:78px;height:78px}
+.photohub-note{margin-top:18px;padding:14px;border-top:1.5px solid currentColor;
+  font-size:13px;line-height:1.55;font-weight:600}
+.menu-upload{min-height:190px;border:1.5px dashed rgba(247,242,233,.36);border-radius:8px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;
+  gap:8px;padding:20px;background:var(--deep2);color:var(--paper)}
+.menu-upload svg{width:70px;height:70px;fill:none;stroke:currentColor;stroke-width:3;
+  stroke-linecap:round;stroke-linejoin:round}
+.menu-upload b{text-transform:uppercase;font-size:16px}.menu-upload span{font-size:12px;opacity:.65}
+.menu-previews{display:grid;grid-template-columns:repeat(2,1fr);gap:7px;margin-top:10px}
+.menu-previews div{height:112px;border-radius:5px;overflow:hidden;position:relative;background:var(--deep2)}
+.menu-previews img{width:100%;height:100%;object-fit:cover}
+.menu-previews span{position:absolute;left:6px;bottom:6px;background:var(--ink);color:var(--paper);
+  padding:4px 7px;border-radius:3px;font-size:10px}
+.menu-warning{background:var(--bg);color:var(--on-bg);border-radius:5px;padding:13px;
+  font-size:13px;line-height:1.45;margin-bottom:12px}
+.menu-warning b{display:block;text-transform:uppercase;font-size:15px}
+.menu-review{position:relative;border-top:1px solid rgba(247,242,233,.18);padding:13px 30px 13px 0}
+.menu-review .rm{position:absolute;right:0;top:14px;font-size:22px;opacity:.55}
+.menu-name{width:100%;background:transparent;border:0;border-bottom:1px solid rgba(247,242,233,.25);
+  color:var(--paper);font-size:16px;font-weight:700;padding:0 0 6px;outline:0}
+.menu-review p{font-size:11.5px;line-height:1.4;opacity:.65;margin:7px 0}
+.menu-review>div{display:flex;align-items:baseline;gap:4px;font-size:13px}
+.menu-review>div input{width:64px;background:var(--deep2);border:1px solid rgba(247,242,233,.25);
+  color:var(--paper);padding:7px;text-align:right;font-size:18px;font-weight:900;border-radius:3px}
+.menu-review>div b{font-size:11px;text-transform:uppercase}.menu-review>div small{margin-left:auto;opacity:.55}
+.prudence{background:var(--bg);color:var(--on-bg);border-radius:4px;padding:12px;margin-bottom:12px}
+.prudence b,.prudence span{display:block}.prudence span{font-size:11px;margin-top:3px;opacity:.7}
 @media (max-width:360px){
   .addscroll{padding-left:15px;padding-right:15px}
   .addtools{width:100%;gap:8px}.addtool{min-height:126px}.addrow strong{font-size:24px}
+  .photohub-tools{grid-template-columns:1fr}.photohub-tools .addtool{min-height:145px}
 }
 .phead{display:flex;align-items:center;gap:14px;padding:20px 20px 12px;flex:none}
 .phead .display{font-size:33px;flex:1}
@@ -551,7 +597,8 @@ ML.DRINKS = [
 
 /* Recherche par nom : l'analyse photo renvoie des noms du vocabulaire,
    les macros sont ensuite reprises ici et jamais inventées par le modèle. */
-ML.byName = name => ML.FOODS.find(x => x.n === name) || ML.DRINKS.find(x => x.n === name) || null;
+ML.byName = name => ML.FOODS.find(x => x.n === name) || ML.DRINKS.find(x => x.n === name) ||
+  (ML.store && ML.store.restaurantFoods.find(x => x.n === name)) || null;
 
 /* Macros d'une quantité donnée, à partir d'une entrée du catalogue. */
 ML.scale = (item, qty) => ({
@@ -822,7 +869,7 @@ window.ML = window.ML || {};
 
 ML.store = (() => {
   const KEY = 'molow:beta:v3';
-  const blank = () => ({profile:null, goal:2000, entries:[], weights:[]});
+  const blank = () => ({profile:null, goal:2000, entries:[], weights:[], restaurants:[]});
   let S = blank();
 
   /* Deux dorsales possibles : l'API hôte quand elle existe (bac à sable
@@ -919,6 +966,40 @@ ML.store = (() => {
   }
   function removeEntry(id){ S.entries = S.entries.filter(x => x.id !== id); save(); }
 
+  /* --- cartes de restaurants ---
+     Les plats importés restent regroupés par établissement. Supprimer
+     un restaurant retire son catalogue, jamais les repas déjà notés. */
+  function restaurantFoods(){
+    return (S.restaurants || []).flatMap(restaurant => (restaurant.foods || []).map(food => ({
+      ...food,
+      n:`${restaurant.name} · ${food.dishName}`,
+      restaurant:restaurant.name,
+      restaurantId:restaurant.id,
+      dynamicRestaurant:true
+    })));
+  }
+  function addRestaurant(name, foods){
+    const clean = ML.cleanName(name);
+    if (!clean || !Array.isArray(foods) || !foods.length) return null;
+    const current = (S.restaurants || []).find(x => x.name.toLowerCase() === clean.toLowerCase());
+    const restaurant = {
+      id:current ? current.id : ML.uid(),
+      name:clean,
+      created:new Date().toISOString(),
+      foods:foods.slice(0, 60)
+    };
+    S.restaurants = (S.restaurants || []).filter(x => x.id !== restaurant.id);
+    S.restaurants.push(restaurant);
+    save();
+    return restaurant;
+  }
+  function removeRestaurant(id){
+    const before = (S.restaurants || []).length;
+    S.restaurants = (S.restaurants || []).filter(x => x.id !== id);
+    if (S.restaurants.length !== before) save();
+    return S.restaurants.length !== before;
+  }
+
   /* Les six derniers noms distincts, et les plus répétés : c'est ce qui
      alimente les blocs d'ajout en un geste.                            */
   function recent(type, n = 6){
@@ -990,7 +1071,10 @@ ML.store = (() => {
     get goal(){ return S.goal; },
     get profile(){ return S.profile; },
     get weights(){ return S.weights; },
+    get restaurants(){ return S.restaurants || []; },
+    get restaurantFoods(){ return restaurantFoods(); },
     load, save, entriesOf, totalOf, drinkOf, addEntry, removeEntry,
+    addRestaurant, removeRestaurant,
     recent, frequent, lastOf, addWeight, bmr, tdee, dayState,
     macrosOf, macroTargets,
     setGoal, setProfile, reset, exportData, importData,
@@ -1120,7 +1204,7 @@ ML.shell = (() => {
 
   function jump(view){
     close();
-    if (view === 'photo') ML.photo.open();
+    if (view === 'photo') ML.photo.hub();
     else ML.go(view);
   }
 
@@ -1234,12 +1318,12 @@ ML.home = (() => {
 window.ML = window.ML || {};
 
 ML.add = (() => {
-  const src = t => t === 'f' ? ML.FOODS : ML.DRINKS;
+  const src = t => t === 'f' ? [...ML.FOODS, ...ML.store.restaurantFoods] : ML.DRINKS;
   const unit = t => t === 'f' ? ' g' : ' ml';
   const searchIcon = `<svg viewBox="0 0 48 48" aria-hidden="true"><circle cx="20" cy="20" r="13"></circle><path d="m30 30 11 11"></path></svg>`;
   const cameraIcon = `<svg viewBox="0 0 64 64" aria-hidden="true"><path d="M19 18l5-7h16l5 7h8a5 5 0 0 1 5 5v27a5 5 0 0 1-5 5H11a5 5 0 0 1-5-5V23a5 5 0 0 1 5-5z"></path><circle cx="32" cy="35" r="13"></circle><path d="M32 26a9 9 0 0 1 9 9"></path></svg>`;
   const barcodeIcon = `<svg viewBox="0 0 64 64" aria-hidden="true"><path d="M9 21V9h12M43 9h12v12M55 43v12H43M21 55H9V43"></path><path d="M19 20v24M25 20v24M31 20v24M38 20v24M45 20v24"></path></svg>`;
-  let cur = {};
+  let cur = {}, restaurantFilter = '', deletePendingId = '';
   /* Journée visée par les ajouts. null = aujourd'hui. Renseignée quand
      on rattrape une journée oubliée depuis le calendrier.            */
   let day = null;
@@ -1270,6 +1354,8 @@ ML.add = (() => {
 
   function open(type, forDay){
     day = forDay || null;
+    restaurantFilter = '';
+    deletePendingId = '';
     const title = type === 'f' ? 'Manger' : 'Boire';
     const fav = ML.store.frequent(type), rec = ML.store.recent(type);
     const remembered = [...new Set([...rec, ...fav])].slice(0, 10);
@@ -1291,23 +1377,66 @@ ML.add = (() => {
           placeholder="Rechercher ${type === 'f' ? 'un aliment' : 'une boisson'}"
           oninput="ML.add.filter('${type}')"></label>
         ${tools}
+        ${type === 'f' ? `<div class="restaurant-tabs" id="restaurantTabs"></div>
+          <div id="restaurantActions"></div>` : ''}
         ${remembered.length ? `<div class="addsection"><h2>Récents</h2></div>
           <div class="addrecent">${remembered.map(quick).join('')}</div>` : ''}
-        <div class="addsection"><h2>${type === 'f' ? 'Tous les aliments' : 'Toutes les boissons'}</h2></div>
+        <div class="addsection"><h2 id="listTitle">${type === 'f' ? 'Tous les aliments' : 'Toutes les boissons'}</h2></div>
         <div class="addlist" id="list"></div>
       </div>
       <nav class="nav addnav"></nav>
     </div>`, 'add-panel');
     ML.shell.nav('home');
+    if (type === 'f') renderRestaurantTabs();
     filter(type);
   }
+
+  function restaurantGroups(){
+    return [...new Set(src('f').map(x => x.restaurant).filter(Boolean))];
+  }
+  function renderRestaurantTabs(){
+    const tabs = ML.$('restaurantTabs');
+    if (!tabs) return;
+    tabs.innerHTML = `<button class="${restaurantFilter ? '' : 'on'}" onclick="ML.add.selectRestaurant('')">Tous</button>` +
+      restaurantGroups().map(name => `<button class="${restaurantFilter === name ? 'on' : ''}"
+        onclick="ML.add.selectRestaurant('${ML.esc(name)}')">${ML.h(name)}</button>`).join('');
+    const dynamic = ML.store.restaurants.find(x => x.name === restaurantFilter);
+    const actions = ML.$('restaurantActions');
+    if (actions) actions.innerHTML = dynamic ? `<div class="restaurant-manage ${deletePendingId === dynamic.id ? 'danger' : ''}">
+      <span>${deletePendingId === dynamic.id ? 'Le journal déjà enregistré sera conservé.' : `${dynamic.foods.length} plat${dynamic.foods.length > 1 ? 's' : ''} enregistrés`}</span>
+      ${deletePendingId === dynamic.id
+        ? `<button onclick="ML.add.deleteRestaurant('${ML.esc(dynamic.id)}')">Confirmer</button>
+           <button onclick="ML.add.cancelDelete()">Annuler</button>`
+        : `<button onclick="ML.add.deleteRestaurant('${ML.esc(dynamic.id)}')">Supprimer le restaurant</button>`}</div>` : '';
+    const title = ML.$('listTitle');
+    if (title) title.textContent = restaurantFilter || 'Tous les aliments';
+  }
+  function selectRestaurant(name){
+    restaurantFilter = name || '';
+    deletePendingId = '';
+    renderRestaurantTabs();
+    filter('f');
+  }
+  function deleteRestaurant(id){
+    const restaurant = ML.store.restaurants.find(x => x.id === id);
+    if (!restaurant) return;
+    if (deletePendingId !== id){ deletePendingId = id; renderRestaurantTabs(); return; }
+    ML.store.removeRestaurant(id);
+    deletePendingId = '';
+    restaurantFilter = '';
+    renderRestaurantTabs();
+    filter('f');
+    ML.shell.toast(`${restaurant.name} supprimé du catalogue`);
+  }
+  function cancelDelete(){ deletePendingId = ''; renderRestaurantTabs(); }
 
   function filter(type){
     const q = (ML.$('q').value || '').toLowerCase().trim();
     const list = src(type);
     ML.$('list').innerHTML = list
       .map((x, i) => ({x, i}))
-      .filter(({x}) => x.n.toLowerCase().includes(q))
+      .filter(({x}) => x.n.toLowerCase().includes(q) &&
+        (type !== 'f' || !restaurantFilter || x.restaurant === restaurantFilter))
       .map(({x, i}) => {
         const portion = type === 'd' ? x.v : x.u;
         const portionKcal = portion ? ML.fmt(portion * x.k / 100) : null;
@@ -1342,6 +1471,8 @@ ML.add = (() => {
     ML.shell.panel(ML.shell.head(x.n) + `<div class="pbody">
       ${x.estimated ? `<p class="sub" style="margin-bottom:12px">${x.restaurant ? ML.h(x.restaurant) + ' · ' : ''}
         Valeur estimée pour une portion d'environ ${x.u} g.</p>` : ''}
+      ${x.kcalHigh ? `<div class="prudence"><b>Estimation prudente : ${ML.fmt(x.kcalHigh)} kcal retenues</b>
+        <span>Fourchette IA : ${ML.fmt(x.kcalLow)}–${ML.fmt(x.kcalHigh)} kcal</span></div>` : ''}
       <div class="qty">${presets(type, x).map(([v, l]) =>
         `<button data-q="${v}" onclick="ML.add.setQty(${v})">${l}</button>`).join('')}</div>
       <input class="slide" type="range" min="10" max="${type === 'd' ? 700 : 400}" step="5"
@@ -1389,7 +1520,7 @@ ML.add = (() => {
     }
     const portion = x => x.u || 100;
     const kcal = x => portion(x) * x.k / 100;
-    const fits = ML.FOODS.map((x, i) => ({x, i})).filter(({x}) => kcal(x) <= left)
+    const fits = src('f').map((x, i) => ({x, i})).filter(({x}) => kcal(x) <= left)
                    .sort((a, b) => kcal(a.x) - kcal(b.x));
     const band = (lo, hi) => fits.filter(({x}) => kcal(x) >= lo && kcal(x) <= hi).slice(0, 4);
     const tiers = [['Léger', band(0, left * .35)],
@@ -1406,6 +1537,7 @@ ML.add = (() => {
   }
 
   return {open, filter, detail, detailCustom, setQty, confirm, commit, repeat, hungry,
+          selectRestaurant, deleteRestaurant, cancelDelete,
           get day(){ return day; }, cancel(){ day = null; }};
 })();
 </script>
@@ -1431,7 +1563,151 @@ ML.AI_ENDPOINT = 'https://molow-photo-analysis.adressedemorgan.workers.dev';
 
 ML.photo = (() => {
   let items = [], stream = null, loop = null, scanTimer = null,
-      scanControls = null, scanReader = null, shot = null, scanType = 'f';
+      scanControls = null, scanReader = null, shot = null, scanType = 'f',
+      menuFiles = [], menuItems = [], menuRestaurant = '', menuUrls = [];
+  const plateIcon = `<svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="23"></circle><circle cx="32" cy="32" r="13"></circle><path d="M8 12v17M13 12v17M18 12v17M13 29v23M51 12c-6 7-6 18 0 22v18"></path></svg>`;
+  const restaurantIcon = `<svg viewBox="0 0 64 64" aria-hidden="true"><path d="M9 54h46M14 54V27h36v27M10 27l5-15h34l5 15M13 27c3 5 8 5 11 0 3 5 8 5 11 0 3 5 8 5 11 0 3 5 7 5 9 0"></path><path d="M21 38h9v16M38 38h6v7h-6z"></path></svg>`;
+
+  /* La navigation PHOTO devient un point d'entrée vers les deux usages
+     de l'IA, tout en gardant l'accès direct à l'assiette depuis MANGER. */
+  function hub(){
+    ML.shell.panel(`<div class="addpage photohub">
+      <div class="addscroll">
+        <div class="addmast"><span class="display logo">MO<br>LOW</span>
+          <button class="addclose" onclick="ML.shell.close()" aria-label="Fermer">×</button></div>
+        <div class="addtitle"><h1 class="display">Photo</h1><p>Choisir un outil d'analyse</p></div>
+        <div class="photohub-tools">
+          <button class="addtool" onclick="ML.photo.open()">${plateIcon}<b>Analyser<br>une assiette</b></button>
+          <button class="addtool restaurant" onclick="ML.photo.menuOpen()">${restaurantIcon}<b>Ajouter une carte<br>de restaurant</b></button>
+        </div>
+        <p class="photohub-note">Les estimations de restaurant retiennent volontairement la valeur haute afin de protéger ton objectif calorique.</p>
+      </div>
+      <nav class="nav addnav"></nav>
+    </div>`, 'add-panel');
+    ML.shell.nav('photo');
+  }
+
+  function menuOpen(){
+    menuUrls.forEach(url => URL.revokeObjectURL(url));
+    menuUrls = [];
+    menuFiles = []; menuItems = []; menuRestaurant = '';
+    ML.shell.panel(ML.shell.head('Carte restaurant') + `<div class="pbody">
+      <div class="field"><label>Nom du restaurant</label>
+        <input id="restaurantName" placeholder="Ex. Le Jardin créole"></div>
+      <label class="menu-upload" for="menuShots">${restaurantIcon}
+        <b>Ajouter les photos de la carte</b><span>1 à 4 pages, nettes et bien éclairées</span></label>
+      <input class="hide" type="file" id="menuShots" accept="image/*" multiple
+        onchange="ML.photo.menuPreview(this)">
+      <div class="menu-previews" id="menuPreviews"></div>
+      <p class="note">MO LOW extrait les plats et retient la borne calorique haute. Tu pourras tout vérifier avant l'enregistrement.</p>
+      <button class="cta" id="menuGo" onclick="ML.photo.menuRun()">Analyser la carte</button>
+    </div>`);
+  }
+
+  function menuPreview(input){
+    menuUrls.forEach(url => URL.revokeObjectURL(url));
+    menuFiles = Array.from(input.files || []).slice(0, 4);
+    menuUrls = menuFiles.map(file => URL.createObjectURL(file));
+    const target = ML.$('menuPreviews');
+    if (!target) return;
+    target.innerHTML = menuFiles.map((file, index) => `<div><img src="${menuUrls[index]}" alt="Page ${index + 1}"><span>Page ${index + 1}</span></div>`).join('');
+  }
+
+  async function analyzeMenu(files, restaurant){
+    const body = new FormData();
+    body.append('mode', 'menu');
+    body.append('restaurant', restaurant);
+    const prepared = await Promise.all(files.map(file => prepareImage(file)));
+    prepared.forEach((image, index) => body.append('images', image, `carte-${index + 1}.jpg`));
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 90000);
+    let response;
+    try {
+      response = await fetch(ML.AI_ENDPOINT, {method:'POST', body, signal:controller.signal});
+    } catch (error) {
+      throw new Error(error && error.name === 'AbortError' ? 'analyse trop longue' : 'réseau indisponible');
+    } finally { clearTimeout(timer); }
+    let data = {};
+    try { data = await response.json(); } catch (e) { /* réponse non JSON */ }
+    if (!response.ok) throw new Error(data.error || 'analyse indisponible');
+    return Array.isArray(data.items) ? data.items : [];
+  }
+
+  async function menuRun(){
+    const name = ML.cleanName((ML.$('restaurantName') || {}).value || '');
+    if (!name) return ML.shell.toast('Indique le nom du restaurant');
+    if (!menuFiles.length) return ML.shell.toast('Ajoute au moins une photo de la carte');
+    const button = ML.$('menuGo');
+    button.textContent = 'Lecture de la carte…'; button.disabled = true;
+    let raw;
+    try { raw = await analyzeMenu(menuFiles, name); }
+    catch (error) {
+      button.textContent = 'Analyser la carte'; button.disabled = false;
+      const known = ['photo manquante','format de photo incompatible','photo illisible','photo trop volumineuse',
+        'photos trop volumineuses','réseau indisponible','analyse trop longue','quota Gemini atteint',
+        'clé Gemini refusée','service Gemini temporairement indisponible','résultat Gemini invalide','service non configuré'];
+      return ML.shell.toast(known.includes(error.message) ? error.message : 'Analyse de la carte indisponible');
+    }
+    menuRestaurant = name;
+    menuItems = raw.map(item => ({
+      name:ML.cleanName(item.name), description:String(item.description || '').slice(0, 240),
+      grams:ML.clamp(Math.round(+item.grams || 350), 30, 2000),
+      kcalLow:ML.clamp(Math.round(+item.kcalLow || 0), 1, 3000),
+      kcalHigh:ML.clamp(Math.round(+item.kcalHigh || 0), 1, 4000),
+      protein:ML.clamp(+item.protein || 0, 0, 500), carbs:ML.clamp(+item.carbs || 0, 0, 700),
+      fat:ML.clamp(+item.fat || 0, 0, 500)
+    })).filter(item => item.name && item.kcalHigh >= item.kcalLow).slice(0, 60);
+    if (!menuItems.length){
+      button.textContent = 'Analyser la carte'; button.disabled = false;
+      return ML.shell.toast('Aucun plat lisible sur cette carte');
+    }
+    ML.shell.panel(ML.shell.head(menuRestaurant) + `<div class="pbody">
+      <p class="menu-warning"><b>Estimation prudente</b> — la valeur haute sera enregistrée. Vérifie les plats avant de continuer.</p>
+      <div id="menuReview"></div>
+      <button class="cta" onclick="ML.photo.menuSave()">Enregistrer le restaurant</button>
+      <button class="cta ghost" onclick="ML.photo.menuOpen()">Recommencer</button></div>`);
+    renderMenuReview();
+  }
+
+  function renderMenuReview(){
+    const target = ML.$('menuReview');
+    if (!target) return;
+    target.innerHTML = menuItems.map((item, index) => `<div class="menu-review">
+      <button class="rm" onclick="ML.photo.menuDrop(${index})" aria-label="Retirer">×</button>
+      <input class="menu-name" value="${ML.h(item.name)}" oninput="ML.photo.menuSetName(${index},this.value)">
+      <p>${ML.h(item.description || 'Description non précisée')}</p>
+      <div><span>${ML.fmt(item.kcalLow)}–</span><input type="number" inputmode="numeric" value="${item.kcalHigh}"
+        onchange="ML.photo.menuSetKcal(${index},+this.value)"><b>kcal retenues</b><small>${item.grams} g estimés</small></div>
+    </div>`).join('');
+  }
+  function menuSetName(index, value){ if (menuItems[index]) menuItems[index].name = ML.cleanName(value); }
+  function menuSetKcal(index, value){
+    const item = menuItems[index];
+    if (!item) return;
+    const next = ML.clamp(Math.round(value || item.kcalHigh), item.kcalLow, 4000);
+    const ratio = item.kcalHigh ? next / item.kcalHigh : 1;
+    item.protein *= ratio; item.carbs *= ratio; item.fat *= ratio; item.kcalHigh = next;
+    renderMenuReview();
+  }
+  function menuDrop(index){ menuItems.splice(index, 1); renderMenuReview(); }
+
+  function menuSave(){
+    const per100 = (value, grams) => Math.round(value * 1000 / grams) / 10;
+    const foods = menuItems.filter(item => item.name && item.kcalHigh >= item.kcalLow).map(item => ({
+      dishName:item.name, k:per100(item.kcalHigh, item.grams), p:per100(item.protein, item.grams),
+      c:per100(item.carbs, item.grams), f:per100(item.fat, item.grams), u:item.grams,
+      portionLabel:'1 portion', estimated:true, confidence:'low', kcalLow:item.kcalLow,
+      kcalHigh:item.kcalHigh, visual:item.description, aliases:[item.name],
+      src:'Carte de restaurant · estimation IA prudente'
+    }));
+    const restaurant = ML.store.addRestaurant(menuRestaurant, foods);
+    if (!restaurant) return ML.shell.toast('Aucun plat à enregistrer');
+    menuUrls.forEach(url => URL.revokeObjectURL(url));
+    menuFiles = []; menuItems = []; menuUrls = [];
+    ML.add.open('f');
+    ML.add.selectRestaurant(restaurant.name);
+    ML.shell.toast(`${restaurant.name} · ${foods.length} plats ajoutés`);
+  }
 
   /* ---------------- caméra ---------------- */
   async function startCamera(videoEl){
@@ -1758,10 +2034,14 @@ ML.photo = (() => {
     }
     const body = new FormData();
     const prepared = await prepareImage(file);
+    /* Le Worker accepte 150 noms : les cartes personnelles passent en
+       premier pour que leurs plats restent toujours reconnaissables. */
+    const prioritized = [...ML.store.restaurantFoods, ...(ML.PERSONAL_FOODS || []), ...ML.FOODS];
+    const photoCatalog = [...new Map(prioritized.map(item => [item.n, item])).values()].slice(0, 150);
     body.append('image', prepared, 'repas.jpg');
     body.append('hint', hint || '');
-    body.append('vocabulary', JSON.stringify(ML.FOODS.map(x => x.n)));
-    body.append('catalog', JSON.stringify(ML.FOODS.map(x => ({
+    body.append('vocabulary', JSON.stringify(photoCatalog.map(x => x.n)));
+    body.append('catalog', JSON.stringify(photoCatalog.map(x => ({
       n:x.n, aliases:Array.isArray(x.aliases) ? x.aliases : [], visual:x.visual || ''
     }))));
     const controller = new AbortController();
@@ -1849,7 +2129,8 @@ ML.photo = (() => {
     ML.add.commit('Repas photographié', t, items.map(x => x.n).join(', '), 'f', totalMacros());
   }
 
-  return {open, preview, run, scan, manual, save, setGrams, drop, stopCamera, analyze, lookup};
+  return {hub, open, preview, run, scan, manual, save, setGrams, drop, stopCamera, analyze, lookup,
+          menuOpen, menuPreview, menuRun, analyzeMenu, menuSave, menuDrop, menuSetName, menuSetKcal};
 })();
 </script>
 <script>

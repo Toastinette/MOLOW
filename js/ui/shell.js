@@ -29,7 +29,7 @@ ML.shell = (() => {
 
   function jump(view){
     close();
-    if (view === 'photo') ML.photo.open();
+    if (view === 'photo') ML.photo.hub();
     else ML.go(view);
   }
 

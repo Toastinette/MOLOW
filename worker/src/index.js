@@ -8,6 +8,9 @@ const APP_ORIGIN = 'https://toastinette.github.io';
 const MAX_IMAGE_BYTES = 3 * 1024 * 1024;
 const MAX_VOCABULARY = 150;
 const MAX_ITEMS = 12;
+const MAX_MENU_IMAGES = 4;
+const MAX_MENU_ITEMS = 60;
+const MAX_MENU_BYTES = 10 * 1024 * 1024;
 
 const allowedOrigin = origin => origin === APP_ORIGIN ||
   /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin || '');
@@ -55,6 +58,24 @@ function cleanItems(value, vocabulary){
   })).filter(item => allowed.has(item.n) && item.g >= 1 && item.g <= 2000);
 }
 
+function cleanMenuItems(value){
+  const source = value && Array.isArray(value.items) ? value.items : [];
+  const text = (input, length) => String(input || '').replace(/[<>&"']/g, '')
+    .replace(/\s+/g, ' ').trim().slice(0, length);
+  const number = (input, min, max) => Math.max(min, Math.min(max, Number(input) || 0));
+  return source.slice(0, MAX_MENU_ITEMS).map(item => {
+    const low = Math.round(number(item.kcalLow, 1, 3000));
+    const high = Math.round(number(item.kcalHigh, low, 4000));
+    return {
+      name:text(item.name, 80), description:text(item.description, 240),
+      grams:Math.round(number(item.grams, 30, 2000)), kcalLow:low, kcalHigh:high,
+      protein:Math.round(number(item.protein, 0, 500) * 10) / 10,
+      carbs:Math.round(number(item.carbs, 0, 700) * 10) / 10,
+      fat:Math.round(number(item.fat, 0, 500) * 10) / 10
+    };
+  }).filter(item => item.name && item.kcalHigh >= item.kcalLow);
+}
+
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
 
 async function requestGemini(url, options){
@@ -71,6 +92,86 @@ async function requestGemini(url, options){
     await wait(800);
   }
   throw lastError || new Error('Gemini indisponible');
+}
+
+async function analyzeRestaurantMenu(form, env, origin){
+  const restaurant = String(form.get('restaurant') || '').replace(/[<>&"']/g, '')
+    .replace(/\s+/g, ' ').trim().slice(0, 80);
+  const images = form.getAll('images').filter(image => image instanceof File && image.size)
+    .slice(0, MAX_MENU_IMAGES);
+  if (!restaurant) return json({error:'nom du restaurant manquant'}, 400, origin);
+  if (!images.length) return json({error:'photo manquante'}, 400, origin);
+  if (images.some(image => !['image/jpeg','image/png','image/webp'].includes(image.type))){
+    return json({error:'format de photo incompatible'}, 415, origin);
+  }
+  if (images.some(image => image.size > MAX_IMAGE_BYTES) ||
+      images.reduce((sum, image) => sum + image.size, 0) > MAX_MENU_BYTES){
+    return json({error:'photos trop volumineuses'}, 413, origin);
+  }
+
+  const prompt = [
+    `Lis toutes les photos de la carte du restaurant « ${restaurant} ».`,
+    "Extrais tous les plats préparés proposés au client. Ignore les titres de catégories, prix, suppléments isolés et boissons.",
+    "Fusionne les doublons présents sur plusieurs pages, mais conserve séparément les variantes réellement différentes.",
+    "Pour chaque plat, donne un nom court fidèle à la carte et une description concise des ingrédients visibles ou explicitement mentionnés.",
+    "Estime la portion totale en grammes et une fourchette calorique réaliste kcalLow–kcalHigh.",
+    "La borne haute doit être volontairement prudente : portion généreuse, huile, beurre, sauce, fromage, sucre et accompagnements plausibles inclus, sans devenir irréaliste.",
+    "protein, carbs et fat sont les grammes de macronutriments correspondant à cette estimation haute pour la portion entière.",
+    "Ne prétends jamais disposer d'une recette ou d'un poids exact : ce sont des estimations nutritionnelles informatives."
+  ].join('\n');
+
+  const parts = [{text:prompt}];
+  for (const image of images){
+    parts.push({inline_data:{mime_type:image.type, data:imageToBase64(await image.arrayBuffer())}});
+  }
+  const body = {
+    contents:[{role:'user', parts}],
+    generationConfig:{
+      temperature:0.15,
+      maxOutputTokens:8192,
+      responseMimeType:'application/json',
+      responseSchema:{
+        type:'OBJECT',
+        properties:{items:{type:'ARRAY',maxItems:MAX_MENU_ITEMS,items:{type:'OBJECT',properties:{
+          name:{type:'STRING',description:'Nom du plat tel qu’il apparaît sur la carte'},
+          description:{type:'STRING',description:'Ingrédients et accompagnements probables ou mentionnés'},
+          grams:{type:'INTEGER',minimum:30,maximum:2000,description:'Poids estimé de la portion complète'},
+          kcalLow:{type:'INTEGER',minimum:1,maximum:3000,description:'Borne basse réaliste'},
+          kcalHigh:{type:'INTEGER',minimum:1,maximum:4000,description:'Borne haute prudente retenue par MO LOW'},
+          protein:{type:'NUMBER',minimum:0,maximum:500},
+          carbs:{type:'NUMBER',minimum:0,maximum:700},
+          fat:{type:'NUMBER',minimum:0,maximum:500}
+        },required:['name','description','grams','kcalLow','kcalHigh','protein','carbs','fat']}}},
+        required:['items']
+      }
+    }
+  };
+
+  const model = env.GEMINI_MODEL || 'gemini-3.5-flash';
+  let response;
+  try {
+    response = await requestGemini(
+      `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`,
+      {method:'POST',headers:{'Content-Type':'application/json','x-goog-api-key':env.GEMINI_API_KEY},body:JSON.stringify(body)}
+    );
+  } catch (error) {
+    console.error('Gemini carte réseau', error && error.message ? error.message : error);
+    return json({error:'service Gemini temporairement indisponible'}, 502, origin);
+  }
+  if (!response.ok){
+    const detail = (await response.text()).slice(0, 500);
+    console.error('Gemini carte HTTP', response.status, detail);
+    if (response.status === 401 || response.status === 403) return json({error:'clé Gemini refusée'}, 401, origin);
+    if (response.status === 429) return json({error:'quota Gemini atteint'}, 429, origin);
+    return json({error:'service Gemini temporairement indisponible'}, 502, origin);
+  }
+  let modelData;
+  try { modelData = await response.json(); }
+  catch (e) { return json({error:'résultat Gemini invalide'}, 502, origin); }
+  let decoded;
+  try { decoded = JSON.parse(readModelText(modelData).replace(/^```json\s*|\s*```$/g, '')); }
+  catch (e) { return json({error:'résultat Gemini invalide'}, 502, origin); }
+  return json({restaurant, items:cleanMenuItems(decoded)}, 200, origin);
 }
 
 export default {
@@ -93,6 +194,10 @@ export default {
     let form;
     try { form = await request.formData(); }
     catch (e) { return json({error:'formulaire invalide'}, 400, origin); }
+
+    if (String(form.get('mode') || '') === 'menu'){
+      return analyzeRestaurantMenu(form, env, origin);
+    }
 
     const image = form.get('image');
     const hint = String(form.get('hint') || '').trim().slice(0, 300);

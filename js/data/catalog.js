@@ -54,7 +54,8 @@ ML.DRINKS = [
 
 /* Recherche par nom : l'analyse photo renvoie des noms du vocabulaire,
    les macros sont ensuite reprises ici et jamais inventées par le modèle. */
-ML.byName = name => ML.FOODS.find(x => x.n === name) || ML.DRINKS.find(x => x.n === name) || null;
+ML.byName = name => ML.FOODS.find(x => x.n === name) || ML.DRINKS.find(x => x.n === name) ||
+  (ML.store && ML.store.restaurantFoods.find(x => x.n === name)) || null;
 
 /* Macros d'une quantité donnée, à partir d'une entrée du catalogue. */
 ML.scale = (item, qty) => ({

@@ -15,7 +15,151 @@ ML.AI_ENDPOINT = 'https://molow-photo-analysis.adressedemorgan.workers.dev';
 
 ML.photo = (() => {
   let items = [], stream = null, loop = null, scanTimer = null,
-      scanControls = null, scanReader = null, shot = null, scanType = 'f';
+      scanControls = null, scanReader = null, shot = null, scanType = 'f',
+      menuFiles = [], menuItems = [], menuRestaurant = '', menuUrls = [];
+  const plateIcon = `<svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="23"></circle><circle cx="32" cy="32" r="13"></circle><path d="M8 12v17M13 12v17M18 12v17M13 29v23M51 12c-6 7-6 18 0 22v18"></path></svg>`;
+  const restaurantIcon = `<svg viewBox="0 0 64 64" aria-hidden="true"><path d="M9 54h46M14 54V27h36v27M10 27l5-15h34l5 15M13 27c3 5 8 5 11 0 3 5 8 5 11 0 3 5 8 5 11 0 3 5 7 5 9 0"></path><path d="M21 38h9v16M38 38h6v7h-6z"></path></svg>`;
+
+  /* La navigation PHOTO devient un point d'entrée vers les deux usages
+     de l'IA, tout en gardant l'accès direct à l'assiette depuis MANGER. */
+  function hub(){
+    ML.shell.panel(`<div class="addpage photohub">
+      <div class="addscroll">
+        <div class="addmast"><span class="display logo">MO<br>LOW</span>
+          <button class="addclose" onclick="ML.shell.close()" aria-label="Fermer">×</button></div>
+        <div class="addtitle"><h1 class="display">Photo</h1><p>Choisir un outil d'analyse</p></div>
+        <div class="photohub-tools">
+          <button class="addtool" onclick="ML.photo.open()">${plateIcon}<b>Analyser<br>une assiette</b></button>
+          <button class="addtool restaurant" onclick="ML.photo.menuOpen()">${restaurantIcon}<b>Ajouter une carte<br>de restaurant</b></button>
+        </div>
+        <p class="photohub-note">Les estimations de restaurant retiennent volontairement la valeur haute afin de protéger ton objectif calorique.</p>
+      </div>
+      <nav class="nav addnav"></nav>
+    </div>`, 'add-panel');
+    ML.shell.nav('photo');
+  }
+
+  function menuOpen(){
+    menuUrls.forEach(url => URL.revokeObjectURL(url));
+    menuUrls = [];
+    menuFiles = []; menuItems = []; menuRestaurant = '';
+    ML.shell.panel(ML.shell.head('Carte restaurant') + `<div class="pbody">
+      <div class="field"><label>Nom du restaurant</label>
+        <input id="restaurantName" placeholder="Ex. Le Jardin créole"></div>
+      <label class="menu-upload" for="menuShots">${restaurantIcon}
+        <b>Ajouter les photos de la carte</b><span>1 à 4 pages, nettes et bien éclairées</span></label>
+      <input class="hide" type="file" id="menuShots" accept="image/*" multiple
+        onchange="ML.photo.menuPreview(this)">
+      <div class="menu-previews" id="menuPreviews"></div>
+      <p class="note">MO LOW extrait les plats et retient la borne calorique haute. Tu pourras tout vérifier avant l'enregistrement.</p>
+      <button class="cta" id="menuGo" onclick="ML.photo.menuRun()">Analyser la carte</button>
+    </div>`);
+  }
+
+  function menuPreview(input){
+    menuUrls.forEach(url => URL.revokeObjectURL(url));
+    menuFiles = Array.from(input.files || []).slice(0, 4);
+    menuUrls = menuFiles.map(file => URL.createObjectURL(file));
+    const target = ML.$('menuPreviews');
+    if (!target) return;
+    target.innerHTML = menuFiles.map((file, index) => `<div><img src="${menuUrls[index]}" alt="Page ${index + 1}"><span>Page ${index + 1}</span></div>`).join('');
+  }
+
+  async function analyzeMenu(files, restaurant){
+    const body = new FormData();
+    body.append('mode', 'menu');
+    body.append('restaurant', restaurant);
+    const prepared = await Promise.all(files.map(file => prepareImage(file)));
+    prepared.forEach((image, index) => body.append('images', image, `carte-${index + 1}.jpg`));
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 90000);
+    let response;
+    try {
+      response = await fetch(ML.AI_ENDPOINT, {method:'POST', body, signal:controller.signal});
+    } catch (error) {
+      throw new Error(error && error.name === 'AbortError' ? 'analyse trop longue' : 'réseau indisponible');
+    } finally { clearTimeout(timer); }
+    let data = {};
+    try { data = await response.json(); } catch (e) { /* réponse non JSON */ }
+    if (!response.ok) throw new Error(data.error || 'analyse indisponible');
+    return Array.isArray(data.items) ? data.items : [];
+  }
+
+  async function menuRun(){
+    const name = ML.cleanName((ML.$('restaurantName') || {}).value || '');
+    if (!name) return ML.shell.toast('Indique le nom du restaurant');
+    if (!menuFiles.length) return ML.shell.toast('Ajoute au moins une photo de la carte');
+    const button = ML.$('menuGo');
+    button.textContent = 'Lecture de la carte…'; button.disabled = true;
+    let raw;
+    try { raw = await analyzeMenu(menuFiles, name); }
+    catch (error) {
+      button.textContent = 'Analyser la carte'; button.disabled = false;
+      const known = ['photo manquante','format de photo incompatible','photo illisible','photo trop volumineuse',
+        'photos trop volumineuses','réseau indisponible','analyse trop longue','quota Gemini atteint',
+        'clé Gemini refusée','service Gemini temporairement indisponible','résultat Gemini invalide','service non configuré'];
+      return ML.shell.toast(known.includes(error.message) ? error.message : 'Analyse de la carte indisponible');
+    }
+    menuRestaurant = name;
+    menuItems = raw.map(item => ({
+      name:ML.cleanName(item.name), description:String(item.description || '').slice(0, 240),
+      grams:ML.clamp(Math.round(+item.grams || 350), 30, 2000),
+      kcalLow:ML.clamp(Math.round(+item.kcalLow || 0), 1, 3000),
+      kcalHigh:ML.clamp(Math.round(+item.kcalHigh || 0), 1, 4000),
+      protein:ML.clamp(+item.protein || 0, 0, 500), carbs:ML.clamp(+item.carbs || 0, 0, 700),
+      fat:ML.clamp(+item.fat || 0, 0, 500)
+    })).filter(item => item.name && item.kcalHigh >= item.kcalLow).slice(0, 60);
+    if (!menuItems.length){
+      button.textContent = 'Analyser la carte'; button.disabled = false;
+      return ML.shell.toast('Aucun plat lisible sur cette carte');
+    }
+    ML.shell.panel(ML.shell.head(menuRestaurant) + `<div class="pbody">
+      <p class="menu-warning"><b>Estimation prudente</b> — la valeur haute sera enregistrée. Vérifie les plats avant de continuer.</p>
+      <div id="menuReview"></div>
+      <button class="cta" onclick="ML.photo.menuSave()">Enregistrer le restaurant</button>
+      <button class="cta ghost" onclick="ML.photo.menuOpen()">Recommencer</button></div>`);
+    renderMenuReview();
+  }
+
+  function renderMenuReview(){
+    const target = ML.$('menuReview');
+    if (!target) return;
+    target.innerHTML = menuItems.map((item, index) => `<div class="menu-review">
+      <button class="rm" onclick="ML.photo.menuDrop(${index})" aria-label="Retirer">×</button>
+      <input class="menu-name" value="${ML.h(item.name)}" oninput="ML.photo.menuSetName(${index},this.value)">
+      <p>${ML.h(item.description || 'Description non précisée')}</p>
+      <div><span>${ML.fmt(item.kcalLow)}–</span><input type="number" inputmode="numeric" value="${item.kcalHigh}"
+        onchange="ML.photo.menuSetKcal(${index},+this.value)"><b>kcal retenues</b><small>${item.grams} g estimés</small></div>
+    </div>`).join('');
+  }
+  function menuSetName(index, value){ if (menuItems[index]) menuItems[index].name = ML.cleanName(value); }
+  function menuSetKcal(index, value){
+    const item = menuItems[index];
+    if (!item) return;
+    const next = ML.clamp(Math.round(value || item.kcalHigh), item.kcalLow, 4000);
+    const ratio = item.kcalHigh ? next / item.kcalHigh : 1;
+    item.protein *= ratio; item.carbs *= ratio; item.fat *= ratio; item.kcalHigh = next;
+    renderMenuReview();
+  }
+  function menuDrop(index){ menuItems.splice(index, 1); renderMenuReview(); }
+
+  function menuSave(){
+    const per100 = (value, grams) => Math.round(value * 1000 / grams) / 10;
+    const foods = menuItems.filter(item => item.name && item.kcalHigh >= item.kcalLow).map(item => ({
+      dishName:item.name, k:per100(item.kcalHigh, item.grams), p:per100(item.protein, item.grams),
+      c:per100(item.carbs, item.grams), f:per100(item.fat, item.grams), u:item.grams,
+      portionLabel:'1 portion', estimated:true, confidence:'low', kcalLow:item.kcalLow,
+      kcalHigh:item.kcalHigh, visual:item.description, aliases:[item.name],
+      src:'Carte de restaurant · estimation IA prudente'
+    }));
+    const restaurant = ML.store.addRestaurant(menuRestaurant, foods);
+    if (!restaurant) return ML.shell.toast('Aucun plat à enregistrer');
+    menuUrls.forEach(url => URL.revokeObjectURL(url));
+    menuFiles = []; menuItems = []; menuUrls = [];
+    ML.add.open('f');
+    ML.add.selectRestaurant(restaurant.name);
+    ML.shell.toast(`${restaurant.name} · ${foods.length} plats ajoutés`);
+  }
 
   /* ---------------- caméra ---------------- */
   async function startCamera(videoEl){
@@ -342,10 +486,14 @@ ML.photo = (() => {
     }
     const body = new FormData();
     const prepared = await prepareImage(file);
+    /* Le Worker accepte 150 noms : les cartes personnelles passent en
+       premier pour que leurs plats restent toujours reconnaissables. */
+    const prioritized = [...ML.store.restaurantFoods, ...(ML.PERSONAL_FOODS || []), ...ML.FOODS];
+    const photoCatalog = [...new Map(prioritized.map(item => [item.n, item])).values()].slice(0, 150);
     body.append('image', prepared, 'repas.jpg');
     body.append('hint', hint || '');
-    body.append('vocabulary', JSON.stringify(ML.FOODS.map(x => x.n)));
-    body.append('catalog', JSON.stringify(ML.FOODS.map(x => ({
+    body.append('vocabulary', JSON.stringify(photoCatalog.map(x => x.n)));
+    body.append('catalog', JSON.stringify(photoCatalog.map(x => ({
       n:x.n, aliases:Array.isArray(x.aliases) ? x.aliases : [], visual:x.visual || ''
     }))));
     const controller = new AbortController();
@@ -433,5 +581,6 @@ ML.photo = (() => {
     ML.add.commit('Repas photographié', t, items.map(x => x.n).join(', '), 'f', totalMacros());
   }
 
-  return {open, preview, run, scan, manual, save, setGrams, drop, stopCamera, analyze, lookup};
+  return {hub, open, preview, run, scan, manual, save, setGrams, drop, stopCamera, analyze, lookup,
+          menuOpen, menuPreview, menuRun, analyzeMenu, menuSave, menuDrop, menuSetName, menuSetKcal};
 })();

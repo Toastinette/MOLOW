@@ -7,7 +7,7 @@ window.ML = window.ML || {};
 
 ML.store = (() => {
   const KEY = 'molow:beta:v3';
-  const blank = () => ({profile:null, goal:2000, entries:[], weights:[]});
+  const blank = () => ({profile:null, goal:2000, entries:[], weights:[], restaurants:[]});
   let S = blank();
 
   /* Deux dorsales possibles : l'API hôte quand elle existe (bac à sable
@@ -104,6 +104,40 @@ ML.store = (() => {
   }
   function removeEntry(id){ S.entries = S.entries.filter(x => x.id !== id); save(); }
 
+  /* --- cartes de restaurants ---
+     Les plats importés restent regroupés par établissement. Supprimer
+     un restaurant retire son catalogue, jamais les repas déjà notés. */
+  function restaurantFoods(){
+    return (S.restaurants || []).flatMap(restaurant => (restaurant.foods || []).map(food => ({
+      ...food,
+      n:`${restaurant.name} · ${food.dishName}`,
+      restaurant:restaurant.name,
+      restaurantId:restaurant.id,
+      dynamicRestaurant:true
+    })));
+  }
+  function addRestaurant(name, foods){
+    const clean = ML.cleanName(name);
+    if (!clean || !Array.isArray(foods) || !foods.length) return null;
+    const current = (S.restaurants || []).find(x => x.name.toLowerCase() === clean.toLowerCase());
+    const restaurant = {
+      id:current ? current.id : ML.uid(),
+      name:clean,
+      created:new Date().toISOString(),
+      foods:foods.slice(0, 60)
+    };
+    S.restaurants = (S.restaurants || []).filter(x => x.id !== restaurant.id);
+    S.restaurants.push(restaurant);
+    save();
+    return restaurant;
+  }
+  function removeRestaurant(id){
+    const before = (S.restaurants || []).length;
+    S.restaurants = (S.restaurants || []).filter(x => x.id !== id);
+    if (S.restaurants.length !== before) save();
+    return S.restaurants.length !== before;
+  }
+
   /* Les six derniers noms distincts, et les plus répétés : c'est ce qui
      alimente les blocs d'ajout en un geste.                            */
   function recent(type, n = 6){
@@ -175,7 +209,10 @@ ML.store = (() => {
     get goal(){ return S.goal; },
     get profile(){ return S.profile; },
     get weights(){ return S.weights; },
+    get restaurants(){ return S.restaurants || []; },
+    get restaurantFoods(){ return restaurantFoods(); },
     load, save, entriesOf, totalOf, drinkOf, addEntry, removeEntry,
+    addRestaurant, removeRestaurant,
     recent, frequent, lastOf, addWeight, bmr, tdee, dayState,
     macrosOf, macroTargets,
     setGoal, setProfile, reset, exportData, importData,

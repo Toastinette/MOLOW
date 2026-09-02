@@ -3,6 +3,10 @@
 Cloudflare Worker chargé d'envoyer une photo de repas à Gemini sans exposer
 la clé d'API dans l'application publique.
 
+Le même Worker traite aussi jusqu'à quatre photos d'une carte de restaurant.
+Il extrait les plats, produit une fourchette nutritionnelle et renvoie une
+borne haute prudente destinée au catalogue personnel de l'utilisateur.
+
 ## Configuration
 
 - Worker : `molow-photo-analysis`
