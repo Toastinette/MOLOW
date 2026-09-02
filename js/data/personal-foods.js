@@ -77,4 +77,13 @@ ML.PERSONAL_FOODS = ML.PERSONAL_PORTIONS.map(item => ({
   src:'Recette personnelle estimée'
 }));
 
+/* Aliments renseignés directement pour 100 g. Cette liste convient aux
+   préparations dont la composition est déjà connue dans ce format. */
+ML.PERSONAL_FOODS.push({
+  n:"Légumes rôtis maison",k:75,p:1.5,c:15,f:1.5,
+  category:"Maison",aliases:["légumes rôtis","légumes au four"],
+  visual:"Mélange de légumes coupés et rôtis au four avec une petite quantité d'huile.",
+  src:'Recette personnelle · valeurs pour 100 g'
+});
+
 ML.FOODS.push(...ML.PERSONAL_FOODS);

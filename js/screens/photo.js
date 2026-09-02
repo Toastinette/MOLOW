@@ -172,9 +172,10 @@ ML.photo = (() => {
   async function resolve(ean){
     msg('Recherche du produit…');
     let p;
-    try { p = await lookup(ean); }
+    try { p = await lookup(ean, scanType); }
     catch (e) { return msg("Pas de réseau. Réessaie, ou ajoute le produit à la main."); }
     if (!p) return msg(`Code ${ean} inconnu d'Open Food Facts. Ajoute-le à la main depuis ${scanType === 'd' ? 'BOIRE' : 'MANGER'}.`);
+    if (p.missingNutrition) return msg(`${p.n} est bien dans Open Food Facts, mais sa fiche nutritionnelle est incomplète.`);
     const presets = scanType === 'd'
       ? [[p.portion, '1 portion'], [330, '33 cl'], [500, '50 cl'], [100, '100 ml']]
       : [[p.portion, '1 portion'], [p.portion * 2, '2 portions'], [100, '100 g'], [p.pack, 'Le paquet']];
@@ -184,29 +185,68 @@ ML.photo = (() => {
   /* --- FRONTIÈRE RÉSEAU 1 : Open Food Facts ---
      API publique, sans clé, sans quota bloquant. Base contributive :
      tout ce qui en sort est nettoyé et borné avant affichage.     */
-  async function lookup(ean){
+  async function lookup(ean, type){
     const url = 'https://world.openfoodfacts.org/api/v2/product/' + encodeURIComponent(ean)
-              + '.json?fields=product_name,product_name_fr,brands,nutriments,serving_quantity,quantity';
+              + '.json?product_type=all&fields=product_name,product_name_fr,brands,nutriments,serving_quantity,serving_size,quantity,product_quantity,product_quantity_unit';
     const r = await fetch(url);
     if (!r.ok) throw new Error('réseau');
     const j = await r.json();
     if (!j || j.status !== 1 || !j.product) return null;
 
     const pr = j.product, nu = pr.nutriments || {};
-    /* Certains produits n'ont que l'énergie en kilojoules. */
-    const kcal = +nu['energy-kcal_100g'] || (+nu['energy_100g'] ? +nu['energy_100g'] / 4.184 : 0);
-    if (!kcal) return null;
-
     const name = ML.cleanName(pr.product_name_fr || pr.product_name || '') || 'Produit ' + ean;
     const brand = ML.cleanName((pr.brands || '').split(',')[0] || '');
-    const portion = Math.round(+pr.serving_quantity) || 30;
-    const pack = Math.round(parseFloat(pr.quantity)) || 200;
+    const displayName = brand && !name.toLowerCase().includes(brand.toLowerCase()) ? `${name} (${brand})` : name;
+    const number = (...values) => {
+      for (const value of values){
+        if (value === '' || value === null || value === undefined) continue;
+        const parsed = Number(value);
+        if (Number.isFinite(parsed)) return parsed;
+      }
+      return null;
+    };
+    const amount = value => {
+      const match = String(value || '').toLowerCase().replace(',', '.').match(/([0-9.]+)\s*(ml|cl|l|g|kg)?/);
+      if (!match) return null;
+      const valueNumber = Number(match[1]);
+      if (!Number.isFinite(valueNumber)) return null;
+      if (match[2] === 'cl') return valueNumber * 10;
+      if (match[2] === 'l' || match[2] === 'kg') return valueNumber * 1000;
+      return valueNumber;
+    };
+    const portion = number(pr.serving_quantity) || amount(pr.serving_size) || (type === 'd' ? 330 : 30);
+    const pack = number(pr.product_quantity) || amount(pr.quantity) || (type === 'd' ? 330 : 200);
+
+    /* Open Food Facts normalise les liquides pour 100 ml dans les champs
+       suffixés _100g. Certaines fiches ne donnent toutefois qu'une portion.
+       Une valeur de zéro est valide et ne doit pas être confondue avec une
+       donnée manquante (eau, sodas sans sucre, etc.). */
+    let kcal = number(nu['energy-kcal_100g']);
+    if (kcal === null){
+      const kj = number(nu['energy-kj_100g'], nu.energy_100g);
+      if (kj !== null) kcal = kj / 4.184;
+    }
+    if (kcal === null && portion > 0){
+      const servingKcal = number(nu['energy-kcal_serving']);
+      const servingKj = number(nu['energy-kj_serving'], nu.energy_serving);
+      if (servingKcal !== null) kcal = servingKcal * 100 / portion;
+      else if (servingKj !== null) kcal = servingKj / 4.184 * 100 / portion;
+    }
+    if (kcal === null) return {n:displayName, missingNutrition:true};
+
+    const nutrient = key => {
+      const per100 = number(nu[`${key}_100g`]);
+      if (per100 !== null) return per100;
+      const perServing = number(nu[`${key}_serving`]);
+      return perServing !== null && portion > 0 ? perServing * 100 / portion : 0;
+    };
 
     return {
-      n: brand && !name.toLowerCase().includes(brand.toLowerCase()) ? `${name} (${brand})` : name,
-      k: Math.round(kcal),
-      p: +nu.proteins_100g || 0, c: +nu.carbohydrates_100g || 0, f: +nu.fat_100g || 0,
-      portion: ML.clamp(portion, 5, 300), pack: ML.clamp(pack, 20, 500),
+      n: displayName,
+      k: Math.round(kcal * 10) / 10,
+      p:nutrient('proteins'), c:nutrient('carbohydrates'), f:nutrient('fat'), a:nutrient('alcohol'),
+      portion: ML.clamp(Math.round(portion), 5, type === 'd' ? 1000 : 300),
+      pack: ML.clamp(Math.round(pack), 20, type === 'd' ? 2000 : 500),
       src: 'Open Food Facts ·'
     };
   }
