@@ -12,11 +12,13 @@ window.ML = window.ML || {};
    La clé du modèle vit sur ce proxy, JAMAIS dans ce fichier :
    ce dépôt est public.                                        */
 ML.AI_ENDPOINT = 'https://molow-photo-analysis.adressedemorgan.workers.dev';
+ML.AI_WORKER_VERSION = 'photo-menu-v3';
 
 ML.photo = (() => {
   let items = [], stream = null, loop = null, scanTimer = null,
       scanControls = null, scanReader = null, shot = null, scanType = 'f',
-      menuFiles = [], menuItems = [], menuRestaurant = '', menuUrls = [];
+      menuFiles = [], menuItems = [], menuRestaurant = '', menuUrls = [],
+      workerChecked = false, unmatchedItems = [];
   const plateIcon = `<svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="15"></circle><circle cx="32" cy="32" r="7"></circle><path d="M9 22V9h13M42 9h13v13M55 42v13H42M22 55H9V42"></path></svg>`;
   const restaurantIcon = `<svg viewBox="0 0 64 64" aria-hidden="true"><path d="M9 54h46M14 54V27h36v27M10 27l5-15h34l5 15M13 27c3 5 8 5 11 0 3 5 8 5 11 0 3 5 8 5 11 0 3 5 7 5 9 0"></path><path d="M21 38h9v16M38 38h6v7h-6z"></path></svg>`;
 
@@ -65,14 +67,29 @@ ML.photo = (() => {
     target.innerHTML = menuFiles.map((file, index) => `<div><img src="${menuUrls[index]}" alt="Page ${index + 1}"><span>Page ${index + 1}</span></div>`).join('');
   }
 
+  async function ensureWorker(){
+    if (workerChecked) return;
+    let response, data = {};
+    try {
+      response = await fetch(ML.AI_ENDPOINT, {cache:'no-store'});
+      data = await response.json();
+    } catch (error){ throw new Error('réseau indisponible'); }
+    if (!response.ok || !data.configured) throw new Error('service non configuré');
+    if (data.version !== ML.AI_WORKER_VERSION){
+      throw new Error('service photo à mettre à jour');
+    }
+    workerChecked = true;
+  }
+
   async function analyzeMenu(files, restaurant){
+    await ensureWorker();
     const body = new FormData();
     body.append('mode', 'menu');
     body.append('restaurant', restaurant);
     const prepared = await Promise.all(files.map(file => prepareImage(file)));
     prepared.forEach((image, index) => body.append('images', image, `carte-${index + 1}.jpg`));
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 90000);
+    const timer = setTimeout(() => controller.abort(), 120000);
     let response;
     try {
       response = await fetch(ML.AI_ENDPOINT, {method:'POST', body, signal:controller.signal});
@@ -81,7 +98,11 @@ ML.photo = (() => {
     } finally { clearTimeout(timer); }
     let data = {};
     try { data = await response.json(); } catch (e) { /* réponse non JSON */ }
-    if (!response.ok) throw new Error(data.error || 'analyse indisponible');
+    if (!response.ok){
+      const error = new Error(data.error || 'analyse indisponible');
+      error.requestId = data.requestId || '';
+      throw error;
+    }
     return Array.isArray(data.items) ? data.items : [];
   }
 
@@ -97,7 +118,9 @@ ML.photo = (() => {
       button.textContent = 'Analyser la carte'; button.disabled = false;
       const known = ['photo manquante','format de photo incompatible','photo illisible','photo trop volumineuse',
         'photos trop volumineuses','réseau indisponible','analyse trop longue','quota Gemini atteint',
-        'clé Gemini refusée','service Gemini temporairement indisponible','résultat Gemini invalide','service non configuré'];
+        'clé Gemini refusée','service Gemini temporairement indisponible','résultat Gemini invalide',
+        'service non configuré','service photo à mettre à jour','requête Gemini refusée',
+        'modèle Gemini indisponible','aucun plat lisible sur cette carte'];
       return ML.shell.toast(known.includes(error.message) ? error.message : 'Analyse de la carte indisponible');
     }
     menuRestaurant = name;
@@ -397,6 +420,7 @@ ML.photo = (() => {
 
   /* ---------------- photo du repas ---------------- */
   function open(){
+    unmatchedItems = [];
     ML.shell.panel(ML.shell.head('Photo') + ML.shell.budget() + `<div class="pbody">
       <label class="frame" for="shot" id="shotFrame">
         <div><div style="font-size:42px;opacity:.4">○</div>
@@ -405,7 +429,7 @@ ML.photo = (() => {
       <input type="file" id="shot" class="hide" accept="image/*" capture="environment"
              onchange="ML.photo.preview(this)">
       <input class="search" id="hint" style="margin-top:14px"
-             placeholder="Précision : « cuit à l'huile, sauce yaourt »">
+             placeholder="Ex. poulet, courgettes, poêle, huile">
       <p class="note" style="margin-top:10px">Pour de meilleurs résultats : photographie tout le plat
         par-dessus, avec une bonne lumière, puis précise le nom d'une recette si tu le connais.</p>
       <button class="cta" id="go" onclick="ML.photo.run()">Analyser</button>
@@ -482,14 +506,19 @@ ML.photo = (() => {
     if (!ML.AI_ENDPOINT){
       await new Promise(r => setTimeout(r, 700));
       const meal = ML.MOCK_MEALS[Math.floor(Math.random() * ML.MOCK_MEALS.length)];
-      return meal.map(x => ({n:x.n, g:x.g}));
+      return {items:meal.map(x => ({n:x.n, g:x.g})), unmatched:[]};
     }
+    await ensureWorker();
     const body = new FormData();
     const prepared = await prepareImage(file);
-    /* Le Worker accepte 150 noms : les cartes personnelles passent en
-       premier pour que leurs plats restent toujours reconnaissables. */
-    const prioritized = [...ML.store.restaurantFoods, ...(ML.PERSONAL_FOODS || []), ...ML.FOODS];
-    const photoCatalog = [...new Map(prioritized.map(item => [item.n, item])).values()].slice(0, 150);
+    /* Les aliments de base restent toujours présents, même après l'ajout
+       de nombreuses cartes de restaurants. Le schéma Gemini n'embarque
+       plus cette liste : elle sert uniquement au rapprochement final. */
+    const restaurantSeed = new Set((ML.RESTAURANT_FOODS || []).map(item => item.n));
+    const coreFoods = ML.FOODS.filter(item => !restaurantSeed.has(item.n));
+    const prioritized = [...coreFoods, ...(ML.PERSONAL_FOODS || []),
+      ...ML.store.restaurantFoods, ...(ML.RESTAURANT_FOODS || [])];
+    const photoCatalog = [...new Map(prioritized.map(item => [item.n, item])).values()].slice(0, 300);
     body.append('image', prepared, 'repas.jpg');
     body.append('hint', hint || '');
     body.append('vocabulary', JSON.stringify(photoCatalog.map(x => x.n)));
@@ -497,7 +526,7 @@ ML.photo = (() => {
       n:x.n, aliases:Array.isArray(x.aliases) ? x.aliases : [], visual:x.visual || ''
     }))));
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 45000);
+    const timer = setTimeout(() => controller.abort(), 60000);
     let r;
     try {
       r = await fetch(ML.AI_ENDPOINT, {method:'POST', body, signal:controller.signal});
@@ -508,24 +537,35 @@ ML.photo = (() => {
     }
     let j = {};
     try { j = await r.json(); } catch (e) { /* réponse non JSON */ }
-    if (!r.ok) throw new Error(j.error || 'analyse indisponible');
-    return Array.isArray(j.items) ? j.items : [];
+    if (!r.ok){
+      const error = new Error(j.error || 'analyse indisponible');
+      error.requestId = j.requestId || '';
+      throw error;
+    }
+    return {
+      items:Array.isArray(j.items) ? j.items : [],
+      unmatched:Array.isArray(j.unmatched) ? j.unmatched : []
+    };
   }
 
   async function run(){
     const btn = ML.$('go');
     if (!shot) return ML.shell.toast("Prends d'abord une photo de ton assiette");
     btn.textContent = 'Analyse…';
-    let raw;
-    try { raw = await analyze(shot, (ML.$('hint') || {}).value || ''); }
+    let result;
+    try { result = await analyze(shot, (ML.$('hint') || {}).value || ''); }
     catch (e) {
       btn.textContent = 'Analyser';
       const known = ['photo manquante', 'format de photo incompatible', 'photo illisible',
         'photo trop volumineuse', 'réseau indisponible', 'analyse trop longue',
         'quota Gemini atteint', 'clé Gemini refusée', 'service Gemini temporairement indisponible',
-        'résultat Gemini invalide', 'service non configuré'];
+        'résultat Gemini invalide', 'service non configuré','service photo à mettre à jour',
+        'requête Gemini refusée','modèle Gemini indisponible'];
       return ML.shell.toast(known.includes(e.message) ? e.message : "Analyse indisponible");
     }
+
+    const raw = result.items;
+    unmatchedItems = result.unmatched;
 
     /* Un aliment inconnu du catalogue est écarté : le modèle ne peut
        donc introduire ni valeur ni contenu arbitraire.            */
@@ -540,6 +580,8 @@ ML.photo = (() => {
     ML.shell.panel(ML.shell.head('À valider') + `<div class="pbody">
       <p class="sub" style="line-height:1.55;margin-bottom:4px">
         Corrige les quantités si besoin, le total se recalcule.</p>
+      ${unmatchedItems.length ? `<p class="note"><b>À vérifier :</b> ${ML.h(unmatchedItems.join(', '))}
+        n'a pas pu être rapproché de la base alimentaire.</p>` : ''}
       <div id="ests"></div>
       <div class="big2 num" id="tot"></div>
       <div class="sub">estimation, marge d'environ 20 %</div>
