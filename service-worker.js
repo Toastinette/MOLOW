@@ -5,7 +5,7 @@
    données vivent dans localStorage, jamais sur le réseau.
    Après toute modification des fichiers, incrémenter CACHE.
 ------------------------------------------------------------------- */
-const CACHE = 'molow-v13';
+const CACHE = 'molow-v15';
 
 const SHELL = [
   './',
@@ -21,6 +21,7 @@ const SHELL = [
   './js/data/catalog.js',
   './js/data/restaurant-foods.js',
   './js/data/personal-foods.js',
+  './js/data/snacks.js',
   './js/core/utils.js',
   './js/core/store.js',
   './js/core/theme.js',

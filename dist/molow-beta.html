@@ -307,6 +307,28 @@ input,select{font-family:inherit}
 .menu-review>div b{font-size:11px;text-transform:uppercase}.menu-review>div small{margin-left:auto;opacity:.55}
 .prudence{background:var(--bg);color:var(--on-bg);border-radius:4px;padding:12px;margin-bottom:12px}
 .prudence b,.prudence span{display:block}.prudence span{font-size:11px;margin-top:3px;opacity:.7}
+
+/* ---- J'AI FAIM : collations sur le pouce ---- */
+.hungry-page .addtitle h1{font-size:clamp(55px,16vw,86px)}
+.hungry-budget{margin-top:20px;padding:13px 0;border-top:1.5px solid currentColor;border-bottom:1.5px solid currentColor;
+  display:flex;align-items:baseline;gap:7px;color:var(--on-bg)}
+.hungry-budget span{flex:1;text-transform:uppercase;font-size:11px;font-weight:800;letter-spacing:.05em}
+.hungry-budget b{font-size:42px;line-height:1;font-weight:900;font-variant-numeric:tabular-nums}
+.hungry-budget small{font-size:13px;font-weight:700}
+.hungry-intro{font-size:13px;line-height:1.5;margin:13px 0 3px;max-width:360px}
+.snack-section{margin-top:22px}.snack-heading{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:8px}
+.snack-section.sante,.snack-section.plaisir{color:var(--paper)}
+.snack-heading h2{text-transform:uppercase;font-size:22px;font-weight:900}.snack-heading span{font-size:10px;text-transform:uppercase;opacity:.65}
+.snack-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:7px}
+.snack-card{min-height:118px;border-radius:9px;padding:13px;text-align:left;display:flex;flex-direction:column;
+  background:var(--raise);color:var(--on-raise)}
+.snack-section.sante .snack-card{background:var(--sink);color:var(--on-sink)}
+.snack-section.plaisir .snack-card{background:var(--deep);color:var(--on-deep);border:1px solid rgba(247,242,233,.18)}
+.snack-card>b{font-size:15px;line-height:1.05;min-height:32px}.snack-card>span{margin-top:auto;display:flex;align-items:baseline;gap:4px}
+.snack-card strong{font-size:29px;line-height:1;font-weight:900}.snack-card small{font-size:9.5px;line-height:1.3;margin-top:5px;opacity:.7}
+.hungry-empty{margin-top:22px;background:var(--deep);color:var(--paper);padding:18px;border-radius:8px}
+.hungry-empty b{font-size:20px;text-transform:uppercase}.hungry-empty p{font-size:13px;line-height:1.5;margin-top:6px;opacity:.75}
+.hungry-empty button{margin-top:14px;text-decoration:underline;font-weight:800}
 @media (max-width:360px){
   .addscroll{padding-left:15px;padding-right:15px}
   .addtools{width:100%;gap:8px}.addtool{min-height:126px}.addrow strong{font-size:24px}
@@ -818,6 +840,63 @@ ML.PERSONAL_FOODS.push({
 });
 
 ML.FOODS.push(...ML.PERSONAL_FOODS);
+</script>
+<script>
+/* js/data/snacks.js */
+/* ------------------------------------------------------------------
+   snacks.js — portions cohérentes pour l'écran J'AI FAIM
+
+   Catalogue volontairement séparé des repas et des restaurants : une
+   entrée représente une collation complète, prête à manger sur le pouce.
+   Les valeurs sont des estimations par portion et restent modifiables.
+------------------------------------------------------------------- */
+window.ML = window.ML || {};
+
+ML.SNACK_PORTIONS = [
+  /* Léger */
+  {name:"1 clémentine",category:"Léger",grams:70,kcal:33,protein:.6,carbs:7.5,fat:.1},
+  {name:"Compote sans sucres ajoutés",category:"Léger",grams:100,kcal:55,protein:.3,carbs:12.5,fat:.1},
+  {name:"Barquette de fraises",category:"Léger",grams:200,kcal:64,protein:1.4,carbs:12,fat:.6},
+  {name:"Tomates cerises à croquer",category:"Léger",grams:200,kcal:36,protein:1.8,carbs:6,fat:.4},
+  {name:"2 galettes de riz",category:"Léger",grams:18,kcal:69,protein:1.4,carbs:14.4,fat:.5},
+  {name:"Fromage blanc 0 %",category:"Léger",grams:150,kcal:75,protein:12,carbs:6,fat:.3},
+  {name:"Skyr nature",category:"Léger",grams:150,kcal:95,protein:16,carbs:6,fat:.3},
+  {name:"Bol de pastèque",category:"Léger",grams:250,kcal:75,protein:1.5,carbs:17,fat:.5},
+
+  /* Santé */
+  {name:"1 pomme",category:"Santé",grams:150,kcal:78,protein:.5,carbs:18,fat:.3},
+  {name:"1 banane",category:"Santé",grams:120,kcal:108,protein:1.3,carbs:24,fat:.4},
+  {name:"Poignée d'amandes",category:"Santé",grams:25,kcal:150,protein:5.3,carbs:2,fat:13.3},
+  {name:"2 œufs durs",category:"Santé",grams:110,kcal:160,protein:13.9,carbs:.8,fat:11},
+  {name:"Skyr et banane",category:"Santé",grams:270,kcal:205,protein:17,carbs:30,fat:1},
+  {name:"Pomme et beurre de cacahuète",category:"Santé",grams:170,kcal:195,protein:4.5,carbs:22,fat:10},
+  {name:"Bâtonnets de carotte et houmous",category:"Santé",grams:180,kcal:210,protein:6,carbs:25,fat:10},
+  {name:"Barre protéinée",category:"Santé",grams:55,kcal:210,protein:18,carbs:20,fat:7},
+  {name:"Yaourt et granola",category:"Santé",grams:200,kcal:260,protein:10,carbs:35,fat:8},
+  {name:"Tartine complète au jambon",category:"Santé",grams:100,kcal:220,protein:14,carbs:25,fat:6},
+
+  /* Plaisir */
+  {name:"2 carrés de chocolat noir",category:"Plaisir",grams:20,kcal:110,protein:1.5,carbs:8,fat:8},
+  {name:"Petit paquet de chips",category:"Plaisir",grams:30,kcal:162,protein:1.8,carbs:15,fat:10.2},
+  {name:"1 cookie",category:"Plaisir",grams:40,kcal:192,protein:2.2,carbs:25,fat:9.2},
+  {name:"1 glace en bâtonnet",category:"Plaisir",grams:70,kcal:190,protein:3,carbs:24,fat:9},
+  {name:"1 croissant",category:"Plaisir",grams:60,kcal:240,protein:4.8,carbs:25.2,fat:13.2},
+  {name:"1 pain au chocolat",category:"Plaisir",grams:70,kcal:294,protein:5.3,carbs:31.5,fat:16.1},
+  {name:"Mini-sandwich jambon-fromage",category:"Plaisir",grams:150,kcal:360,protein:18,carbs:42,fat:13},
+  {name:"Pop-corn caramélisé",category:"Plaisir",grams:50,kcal:220,protein:2.5,carbs:35,fat:8},
+  {name:"2 samoussas",category:"Plaisir",grams:40,kcal:120,protein:2.8,carbs:12,fat:6.8},
+  {name:"3 bouchons",category:"Plaisir",grams:75,kcal:150,protein:6.8,carbs:16.5,fat:6},
+  {name:"1 muffin",category:"Plaisir",grams:90,kcal:360,protein:5,carbs:48,fat:17}
+];
+
+const snackPer100 = (value, grams) => Math.round(value * 1000 / grams) / 10;
+
+ML.SNACKS = ML.SNACK_PORTIONS.map(item => ({
+  n:item.name, category:item.category, u:item.grams, portionLabel:'1 portion',
+  k:snackPer100(item.kcal,item.grams), p:snackPer100(item.protein,item.grams),
+  c:snackPer100(item.carbs,item.grams), f:snackPer100(item.fat,item.grams),
+  portionKcal:item.kcal, src:'Collation estimée'
+}));
 </script>
 <script>
 /* js/core/utils.js */
@@ -1508,35 +1587,47 @@ ML.add = (() => {
     setQty(cur.q);
   }
 
-  /* ---- J'AI FAIM : filtrage local, aucun appel réseau ---- */
+  /* ---- J'AI FAIM : collations dédiées, jamais les repas complets ---- */
   function hungry(){
+    day = null;
     const left = ML.store.left();
-    if (left <= 0){
-      ML.shell.panel(ML.shell.head("J'ai faim") + `<div class="pbody">
-        <p style="font-size:16px;line-height:1.6">Ton budget du jour est bouclé.
-        Un café noir ou un grand verre d'eau passent sans presque rien coûter.</p>
-        <button class="cta ghost" onclick="ML.add.open('d')">Voir les boissons</button></div>`);
-      return;
-    }
-    const portion = x => x.u || 100;
-    const kcal = x => portion(x) * x.k / 100;
-    const fits = src('f').map((x, i) => ({x, i})).filter(({x}) => kcal(x) <= left)
-                   .sort((a, b) => kcal(a.x) - kcal(b.x));
-    const band = (lo, hi) => fits.filter(({x}) => kcal(x) >= lo && kcal(x) <= hi).slice(0, 4);
-    const tiers = [['Léger', band(0, left * .35)],
-                   ['Rassasiant', band(left * .35, left * .7)],
-                   ['Vrai repas', band(left * .7, left)]];
+    const categories = ['Léger','Santé','Plaisir'];
+    const targets = {Léger:Math.min(left, 100), Santé:Math.min(left, 230), Plaisir:Math.min(left, 360)};
+    const suggestions = categories.map(category => [category, ML.SNACKS
+      .map((snack, index) => ({snack, index}))
+      .filter(({snack}) => snack.category === category && snack.portionKcal <= left)
+      .sort((a, b) => Math.abs(a.snack.portionKcal - targets[category]) -
+                      Math.abs(b.snack.portionKcal - targets[category]))
+      .slice(0, 5)]).filter(([, list]) => list.length);
+    const content = left <= 0
+      ? `<div class="hungry-empty"><b>Budget du jour atteint</b><p>Si c'est de la soif, commence par un grand verre d'eau. Sinon, tu peux toujours noter honnêtement une collation.</p>
+           <button onclick="ML.add.open('d')">Voir les boissons</button></div>`
+      : suggestions.length ? suggestions.map(([category, list]) => `<section class="snack-section ${category.toLowerCase().replace('é','e')}">
+          <div class="snack-heading"><h2>${category}</h2><span>${category === 'Léger' ? 'petite faim' : category === 'Santé' ? 'plus rassasiant' : 'envie gourmande'}</span></div>
+          <div class="snack-grid">${list.map(({snack, index}) => `<button class="snack-card" onclick="ML.add.snackDetail(${index})">
+            <b>${ML.h(snack.n)}</b><span><strong>${ML.fmt(snack.portionKcal)}</strong> kcal</span>
+            <small>${ML.h(snack.portionLabel)} · ${snack.u} g${snack.p * snack.u / 100 >= 5 ? ` · ${ML.fmt(snack.p * snack.u / 100)} g protéines` : ''}</small>
+          </button>`).join('')}</div></section>`).join('')
+        : `<div class="hungry-empty"><b>Moins de ${ML.fmt(Math.max(0,left))} kcal disponibles</b><p>Aucune portion complète du catalogue ne rentre dans ce budget.</p></div>`;
 
-    ML.shell.panel(ML.shell.head("J'ai faim") +
-      `<div class="budget">Il te reste <b>${ML.fmt(left)} kcal</b>. Voilà ce qui rentre.</div>
-       <div class="pbody">${tiers.filter(([, l]) => l.length).map(([t, l]) =>
-        `<div class="sec">${t}</div><div class="chips list">${l.map(({x, i}) =>
-          `<button class="chip" onclick="ML.add.detail('f',${i})">
-             <b>${ML.h(x.n)}</b><span>${ML.fmt(kcal(x))} kcal pour ${portion(x)} g</span></button>`).join('')}</div>`).join('')}
-       <p class="note">Suggestions tirées de ta base, sans appel à l'IA.</p></div>`);
+    ML.shell.panel(`<div class="addpage hungry-page"><div class="addscroll">
+      <div class="addmast"><span class="display logo">MO<br>LOW</span>
+        <button class="addclose" onclick="ML.shell.close()" aria-label="Fermer">×</button></div>
+      <div class="addtitle"><h1 class="display">J'ai faim</h1><p>Une collation qui rentre dans la journée</p></div>
+      <div class="hungry-budget"><span>Calories disponibles</span><b>${ML.fmt(Math.max(0,left))}</b><small>kcal</small></div>
+      <p class="hungry-intro">Des portions prêtes à manger sur le pouce. Choisis une envie, puis ajuste la quantité si nécessaire.</p>
+      ${content}
+    </div><nav class="nav addnav"></nav></div>`, 'add-panel');
+    ML.shell.nav('home');
   }
 
-  return {open, filter, detail, detailCustom, setQty, confirm, commit, repeat, hungry,
+  function snackDetail(index){
+    const snack = ML.SNACKS[index];
+    if (!snack) return;
+    detailCustom(snack, 'f', [[snack.u, snack.portionLabel], [snack.u * 2, '2 portions'], [100, '100 g']]);
+  }
+
+  return {open, filter, detail, detailCustom, setQty, confirm, commit, repeat, hungry, snackDetail,
           selectRestaurant, deleteRestaurant, cancelDelete,
           get day(){ return day; }, cancel(){ day = null; }};
 })();

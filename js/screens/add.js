@@ -194,35 +194,47 @@ ML.add = (() => {
     setQty(cur.q);
   }
 
-  /* ---- J'AI FAIM : filtrage local, aucun appel réseau ---- */
+  /* ---- J'AI FAIM : collations dédiées, jamais les repas complets ---- */
   function hungry(){
+    day = null;
     const left = ML.store.left();
-    if (left <= 0){
-      ML.shell.panel(ML.shell.head("J'ai faim") + `<div class="pbody">
-        <p style="font-size:16px;line-height:1.6">Ton budget du jour est bouclé.
-        Un café noir ou un grand verre d'eau passent sans presque rien coûter.</p>
-        <button class="cta ghost" onclick="ML.add.open('d')">Voir les boissons</button></div>`);
-      return;
-    }
-    const portion = x => x.u || 100;
-    const kcal = x => portion(x) * x.k / 100;
-    const fits = src('f').map((x, i) => ({x, i})).filter(({x}) => kcal(x) <= left)
-                   .sort((a, b) => kcal(a.x) - kcal(b.x));
-    const band = (lo, hi) => fits.filter(({x}) => kcal(x) >= lo && kcal(x) <= hi).slice(0, 4);
-    const tiers = [['Léger', band(0, left * .35)],
-                   ['Rassasiant', band(left * .35, left * .7)],
-                   ['Vrai repas', band(left * .7, left)]];
+    const categories = ['Léger','Santé','Plaisir'];
+    const targets = {Léger:Math.min(left, 100), Santé:Math.min(left, 230), Plaisir:Math.min(left, 360)};
+    const suggestions = categories.map(category => [category, ML.SNACKS
+      .map((snack, index) => ({snack, index}))
+      .filter(({snack}) => snack.category === category && snack.portionKcal <= left)
+      .sort((a, b) => Math.abs(a.snack.portionKcal - targets[category]) -
+                      Math.abs(b.snack.portionKcal - targets[category]))
+      .slice(0, 5)]).filter(([, list]) => list.length);
+    const content = left <= 0
+      ? `<div class="hungry-empty"><b>Budget du jour atteint</b><p>Si c'est de la soif, commence par un grand verre d'eau. Sinon, tu peux toujours noter honnêtement une collation.</p>
+           <button onclick="ML.add.open('d')">Voir les boissons</button></div>`
+      : suggestions.length ? suggestions.map(([category, list]) => `<section class="snack-section ${category.toLowerCase().replace('é','e')}">
+          <div class="snack-heading"><h2>${category}</h2><span>${category === 'Léger' ? 'petite faim' : category === 'Santé' ? 'plus rassasiant' : 'envie gourmande'}</span></div>
+          <div class="snack-grid">${list.map(({snack, index}) => `<button class="snack-card" onclick="ML.add.snackDetail(${index})">
+            <b>${ML.h(snack.n)}</b><span><strong>${ML.fmt(snack.portionKcal)}</strong> kcal</span>
+            <small>${ML.h(snack.portionLabel)} · ${snack.u} g${snack.p * snack.u / 100 >= 5 ? ` · ${ML.fmt(snack.p * snack.u / 100)} g protéines` : ''}</small>
+          </button>`).join('')}</div></section>`).join('')
+        : `<div class="hungry-empty"><b>Moins de ${ML.fmt(Math.max(0,left))} kcal disponibles</b><p>Aucune portion complète du catalogue ne rentre dans ce budget.</p></div>`;
 
-    ML.shell.panel(ML.shell.head("J'ai faim") +
-      `<div class="budget">Il te reste <b>${ML.fmt(left)} kcal</b>. Voilà ce qui rentre.</div>
-       <div class="pbody">${tiers.filter(([, l]) => l.length).map(([t, l]) =>
-        `<div class="sec">${t}</div><div class="chips list">${l.map(({x, i}) =>
-          `<button class="chip" onclick="ML.add.detail('f',${i})">
-             <b>${ML.h(x.n)}</b><span>${ML.fmt(kcal(x))} kcal pour ${portion(x)} g</span></button>`).join('')}</div>`).join('')}
-       <p class="note">Suggestions tirées de ta base, sans appel à l'IA.</p></div>`);
+    ML.shell.panel(`<div class="addpage hungry-page"><div class="addscroll">
+      <div class="addmast"><span class="display logo">MO<br>LOW</span>
+        <button class="addclose" onclick="ML.shell.close()" aria-label="Fermer">×</button></div>
+      <div class="addtitle"><h1 class="display">J'ai faim</h1><p>Une collation qui rentre dans la journée</p></div>
+      <div class="hungry-budget"><span>Calories disponibles</span><b>${ML.fmt(Math.max(0,left))}</b><small>kcal</small></div>
+      <p class="hungry-intro">Des portions prêtes à manger sur le pouce. Choisis une envie, puis ajuste la quantité si nécessaire.</p>
+      ${content}
+    </div><nav class="nav addnav"></nav></div>`, 'add-panel');
+    ML.shell.nav('home');
   }
 
-  return {open, filter, detail, detailCustom, setQty, confirm, commit, repeat, hungry,
+  function snackDetail(index){
+    const snack = ML.SNACKS[index];
+    if (!snack) return;
+    detailCustom(snack, 'f', [[snack.u, snack.portionLabel], [snack.u * 2, '2 portions'], [100, '100 g']]);
+  }
+
+  return {open, filter, detail, detailCustom, setQty, confirm, commit, repeat, hungry, snackDetail,
           selectRestaurant, deleteRestaurant, cancelDelete,
           get day(){ return day; }, cancel(){ day = null; }};
 })();

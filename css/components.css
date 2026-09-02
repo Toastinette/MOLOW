@@ -95,6 +95,28 @@
 .menu-review>div b{font-size:11px;text-transform:uppercase}.menu-review>div small{margin-left:auto;opacity:.55}
 .prudence{background:var(--bg);color:var(--on-bg);border-radius:4px;padding:12px;margin-bottom:12px}
 .prudence b,.prudence span{display:block}.prudence span{font-size:11px;margin-top:3px;opacity:.7}
+
+/* ---- J'AI FAIM : collations sur le pouce ---- */
+.hungry-page .addtitle h1{font-size:clamp(55px,16vw,86px)}
+.hungry-budget{margin-top:20px;padding:13px 0;border-top:1.5px solid currentColor;border-bottom:1.5px solid currentColor;
+  display:flex;align-items:baseline;gap:7px;color:var(--on-bg)}
+.hungry-budget span{flex:1;text-transform:uppercase;font-size:11px;font-weight:800;letter-spacing:.05em}
+.hungry-budget b{font-size:42px;line-height:1;font-weight:900;font-variant-numeric:tabular-nums}
+.hungry-budget small{font-size:13px;font-weight:700}
+.hungry-intro{font-size:13px;line-height:1.5;margin:13px 0 3px;max-width:360px}
+.snack-section{margin-top:22px}.snack-heading{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:8px}
+.snack-section.sante,.snack-section.plaisir{color:var(--paper)}
+.snack-heading h2{text-transform:uppercase;font-size:22px;font-weight:900}.snack-heading span{font-size:10px;text-transform:uppercase;opacity:.65}
+.snack-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:7px}
+.snack-card{min-height:118px;border-radius:9px;padding:13px;text-align:left;display:flex;flex-direction:column;
+  background:var(--raise);color:var(--on-raise)}
+.snack-section.sante .snack-card{background:var(--sink);color:var(--on-sink)}
+.snack-section.plaisir .snack-card{background:var(--deep);color:var(--on-deep);border:1px solid rgba(247,242,233,.18)}
+.snack-card>b{font-size:15px;line-height:1.05;min-height:32px}.snack-card>span{margin-top:auto;display:flex;align-items:baseline;gap:4px}
+.snack-card strong{font-size:29px;line-height:1;font-weight:900}.snack-card small{font-size:9.5px;line-height:1.3;margin-top:5px;opacity:.7}
+.hungry-empty{margin-top:22px;background:var(--deep);color:var(--paper);padding:18px;border-radius:8px}
+.hungry-empty b{font-size:20px;text-transform:uppercase}.hungry-empty p{font-size:13px;line-height:1.5;margin-top:6px;opacity:.75}
+.hungry-empty button{margin-top:14px;text-decoration:underline;font-weight:800}
 @media (max-width:360px){
   .addscroll{padding-left:15px;padding-right:15px}
   .addtools{width:100%;gap:8px}.addtool{min-height:126px}.addrow strong{font-size:24px}
