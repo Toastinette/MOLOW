@@ -15,7 +15,8 @@ borne haute prudente destinée au catalogue personnel de l'utilisateur.
 - Repli automatique : `gemini-3.5-flash` si le modèle principal est saturé
 - Cartes de restaurant : `gemini-3.5-flash-lite` pour limiter le délai
 - Secret obligatoire : `GEMINI_API_KEY`
-- Origine autorisée : `https://toastinette.github.io`
+- Origines autorisées : `https://toastinette.github.io`, ainsi que
+  `http://localhost` et `https://localhost` pour l'application Android Capacitor
 
 ## Déploiement
 

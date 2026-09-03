@@ -18,7 +18,7 @@ const MENU_BATCH_SIZE = 20;
 const MAX_MENU_BYTES = 10 * 1024 * 1024;
 
 const allowedOrigin = origin => origin === APP_ORIGIN ||
-  /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin || '');
+  /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin || '');
 
 function cors(origin){
   return {
